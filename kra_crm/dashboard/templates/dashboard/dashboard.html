@@ -1,0 +1,60 @@
+<h2>Dashboard</h2>
+
+{% if is_boss %}
+
+<h3>Employee Performance</h3>
+
+<table border="1">
+    <tr>
+        <th>Employee</th>
+        <th>Total</th>
+        <th>Completed</th>
+        <th>Late</th>
+        <th>Performance</th>
+    </tr>
+
+    {% for d in data %}
+    <tr>
+        <td>{{ d.employee.user.username }}</td>
+        <td>{{ d.total }}</td>
+        <td>{{ d.completed }}</td>
+        <td>{{ d.late }}</td>
+        <td>{{ d.performance }}%</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% else %}
+
+<h3>My Performance</h3>
+
+<ul>
+    <li>Total Tasks: {{ total }}</li>
+    <li>Completed: {{ completed }}</li>
+    <li>Late: {{ late }}</li>
+    <li>Performance: {{ performance }}%</li>
+</ul>
+
+<h3>My Tasks</h3>
+
+<table border="1">
+    <tr>
+        <th>Task</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+
+    {% for task in tasks %}
+    <tr>
+        <td>{{ task.task.title }}</td>
+        <td>{{ task.status }}</td>
+        <td>
+            <a href="{% url 'start_task' task.id %}">Start</a> |
+            <a href="{% url 'pause_task' task.id %}">Pause</a> |
+            <a href="{% url 'complete_task' task.id %}">Complete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endif %}

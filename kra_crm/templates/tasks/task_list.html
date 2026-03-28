@@ -1,0 +1,31 @@
+<h2>My Tasks</h2>
+
+<table border="1">
+    <tr>
+        <th>Task</th>
+        <th>Status</th>
+        <th>Deadline</th>
+        <th>Late</th>
+        <th>Time Spent</th>
+        <th>Action</th>
+    </tr>
+
+    {% for task in tasks %}
+    <tr>
+        <td>{{ task.task.title }}</td>
+        <td>{{ task.status }}</td>
+        <td>{{ task.deadline }}</td>
+        <td>
+            {% if task.is_late %}
+                YES
+            {% else %}
+                NO
+            {% endif %}
+        </td>
+        <td>{{ task.total_time_spent }}</td>
+        <td>
+            <a href="{% url 'update_task' task.id %}">Update</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>

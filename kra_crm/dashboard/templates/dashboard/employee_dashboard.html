@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>My Tasks</h2>
+
+<table class="table table-bordered">
+
+<tr>
+<th>Task</th>
+<th>Status</th>
+<th>Progress</th>
+<th>Deadline</th>
+<th>Time Spent</th>
+<th>Actions</th>
+</tr>
+
+{% for task in tasks %}
+
+<tr>
+
+<td>{{ task.task.title }}</td>
+
+<td>{{ task.status }}</td>
+
+<td>{{ task.progress }}%</td>
+
+<td>{{ task.deadline }}</td>
+
+<td>{{ task.total_time_spent }} minutes</td>
+
+<td>
+
+<a href="{% url 'start_task' task.id %}" class="btn btn-success btn-sm">
+Start
+</a>
+
+<a href="{% url 'pause_task' task.id %}" class="btn btn-warning btn-sm">
+Pause
+</a>
+
+<a href="{% url 'complete_task' task.id %}" class="btn btn-primary btn-sm">
+Complete
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}
