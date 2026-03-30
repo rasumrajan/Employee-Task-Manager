@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+Create Task
+{% endblock %}
+
+{% block content %}
+
+<div class="card card-success">
+
+```
+<div class="card-header">
+    <h3 class="card-title">Create KRA Task</h3>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <!-- Category -->
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label><i class="fas fa-list"></i> Category</label>
+                    {{ form.category }}
+                </div>
+            </div>
+
+            <!-- Title -->
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label><i class="fas fa-tasks"></i> Task Title</label>
+                    {{ form.title }}
+                </div>
+            </div>
+
+            <!-- Frequency -->
+            <div class="col-md-6 mt-2">
+                <div class="form-group">
+                    <label><i class="fas fa-sync"></i> Frequency</label>
+                    {{ form.frequency }}
+                </div>
+            </div>
+
+            <!-- Expected Time -->
+            <div class="col-md-6 mt-2">
+                <div class="form-group">
+                    <label><i class="fas fa-clock"></i> Expected Minutes</label>
+                    {{ form.expected_minutes }}
+                </div>
+            </div>
+
+            <!-- Score -->
+            <div class="col-md-6 mt-2">
+                <div class="form-group">
+                    <label><i class="fas fa-star"></i> Max Score</label>
+                    {{ form.max_score }}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="col-md-12 mt-2">
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Description</label>
+                    {{ form.description }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-footer text-right">
+        <button class="btn btn-success">
+            <i class="fas fa-plus"></i> Create Task
+        </button>
+    </div>
+
+</form>
+```
+
+</div>
+
+{% endblock %}

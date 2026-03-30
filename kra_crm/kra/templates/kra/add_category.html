@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+Add Category
+{% endblock %}
+
+{% block content %}
+
+<div class="card card-primary">
+
+```
+<div class="card-header">
+    <h3 class="card-title">Create KRA Category</h3>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Category Name</label>
+                    {{ form.name }}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> Department</label>
+                    {{ form.department }}
+                </div>
+            </div>
+
+            <div class="col-md-12 mt-2">
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Description</label>
+                    {{ form.description }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-footer text-right">
+        <button class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Category
+        </button>
+    </div>
+
+</form>
+```
+
+</div>
+
+{% endblock %}

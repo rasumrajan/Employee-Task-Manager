@@ -1,60 +1,102 @@
-<h2>Dashboard</h2>
+{% extends 'base.html' %}
+
+{% block page_title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
 
 {% if is_boss %}
 
-<h3>Employee Performance</h3>
+<div class="card">
+    <div class="card-body">
 
-<table border="1">
-    <tr>
-        <th>Employee</th>
-        <th>Total</th>
-        <th>Completed</th>
-        <th>Late</th>
-        <th>Performance</th>
-    </tr>
+        <h4>Employee Performance</h4>
 
-    {% for d in data %}
-    <tr>
-        <td>{{ d.employee.user.username }}</td>
-        <td>{{ d.total }}</td>
-        <td>{{ d.completed }}</td>
-        <td>{{ d.late }}</td>
-        <td>{{ d.performance }}%</td>
-    </tr>
-    {% endfor %}
-</table>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Total</th>
+                    <th>Completed</th>
+                    <th>Late</th>
+                    <th>Performance</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for d in data %}
+                <tr>
+                    <td>{{ d.employee.user.username }}</td>
+                    <td>{{ d.total }}</td>
+                    <td>{{ d.completed }}</td>
+                    <td>
+                        {% if d.late > 0 %}
+                            <span class="text-danger">{{ d.late }}</span>
+                        {% else %}
+                            {{ d.late }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ d.performance }}%</strong>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
 
 {% else %}
 
-<h3>My Performance</h3>
+<div class="card">
+    <div class="card-body">
 
-<ul>
-    <li>Total Tasks: {{ total }}</li>
-    <li>Completed: {{ completed }}</li>
-    <li>Late: {{ late }}</li>
-    <li>Performance: {{ performance }}%</li>
-</ul>
+        <h4>My Performance</h4>
 
-<h3>My Tasks</h3>
+        <ul>
+            <li>Total Tasks: {{ total }}</li>
+            <li>Completed: {{ completed }}</li>
+            <li>Late: {{ late }}</li>
+            <li>Performance: <strong>{{ performance }}%</strong></li>
+        </ul>
 
-<table border="1">
-    <tr>
-        <th>Task</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
+    </div>
+</div>
 
-    {% for task in tasks %}
-    <tr>
-        <td>{{ task.task.title }}</td>
-        <td>{{ task.status }}</td>
-        <td>
-            <a href="{% url 'start_task' task.id %}">Start</a> |
-            <a href="{% url 'pause_task' task.id %}">Pause</a> |
-            <a href="{% url 'complete_task' task.id %}">Complete</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="card mt-3">
+    <div class="card-body">
+
+        <h4>My Tasks</h4>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.task.title }}</td>
+                    <td>{{ task.status }}</td>
+                    <td>
+                        <a href="{% url 'start_task' task.id %}" class="btn btn-sm btn-success">Start</a>
+                        <a href="{% url 'pause_task' task.id %}" class="btn btn-sm btn-warning">Pause</a>
+                        <a href="{% url 'complete_task' task.id %}" class="btn btn-sm btn-primary">Complete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
 
 {% endif %}
+
+{% endblock %}
