@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+Categories
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+```
+<div class="card-header">
+    <h3 class="card-title">KRA Categories</h3>
+
+    <a href="{% url 'add_category' %}" class="btn btn-primary btn-sm float-right">
+        <i class="fas fa-plus"></i> Add Category
+    </a>
+</div>
+
+<div class="card-body">
+
+    <table class="table table-bordered table-hover">
+
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for c in categories %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.department.name }}</td>
+                <td>{{ c.description }}</td>
+
+                <td>
+                  <a href="{% url 'update_category' c.id %}" class="btn btn-warning btn-sm">
+                      <i class="fas fa-edit"></i>
+                  </a>
+
+                  <a href="{% url 'delete_category' c.id %}" 
+                    onclick="return confirm('Are you sure to delete?')"
+                    class="btn btn-danger btn-sm">
+                      <i class="fas fa-trash"></i>
+                  </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+```
+
+</div>
+
+{% endblock %}

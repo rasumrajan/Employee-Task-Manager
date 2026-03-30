@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+Tasks
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+```
+<div class="card-header">
+    <h3 class="card-title">KRA Tasks</h3>
+
+    <a href="{% url 'add_kra_task' %}" class="btn btn-success btn-sm float-right">
+        <i class="fas fa-plus"></i> Create Task
+    </a>
+</div>
+
+<div class="card-body">
+
+    <table class="table table-bordered table-hover">
+
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Department</th>
+                <th>Frequency</th>
+                <th>Time</th>
+                <th>Score</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for t in tasks %}
+            <tr>
+                <td>{{ t.title }}</td>
+                <td>{{ t.category.name }}</td>
+                <td>{{ t.category.department.name }}</td>
+                <td>{{ t.frequency }}</td>
+                <td>{{ t.expected_minutes }} min</td>
+                <td>{{ t.max_score }}</td>
+
+                <td>
+                  <a href="{% url 'update_kra_task' t.id %}" class="btn btn-warning btn-sm">
+                      <i class="fas fa-edit"></i>
+                  </a>
+
+                  <a href="{% url 'delete_kra_task' t.id %}" 
+                    onclick="return confirm('Are you sure to delete?')"
+                    class="btn btn-danger btn-sm">
+                      <i class="fas fa-trash"></i>
+                  </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+```
+
+</div>
+
+{% endblock %}

@@ -12,3 +12,6 @@ class KRACategoryAdmin(admin.ModelAdmin):
 @admin.register(KRATask)
 class KRATaskAdmin(admin.ModelAdmin):
   list_display = ["title", "category", "frequency", "expected_minutes"]
+  
+def is_admin(user):
+    return user.is_superuser

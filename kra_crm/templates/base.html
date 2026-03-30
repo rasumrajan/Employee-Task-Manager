@@ -6,6 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <title>OM SAI WorkSync</title>
+
 <!-- AdminLTE CSS -->
 <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
 <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
@@ -19,6 +20,7 @@
 <!-- Navbar -->
 
 <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+
 <ul class="navbar-nav">
     <li class="nav-item">
         <a class="nav-link" data-widget="pushmenu" href="#">
@@ -34,12 +36,12 @@
         </span>
     </li>
 </ul>
+
 </nav>
 
 <!-- Sidebar -->
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-
 <!-- Brand -->
 <a href="#" class="brand-link text-center">
     <span class="brand-text font-weight-bold">OM SAI WorkSync</span>
@@ -58,7 +60,10 @@
                 </a>
             </li>
 
-            <!-- Department Group -->
+            <!-- ================= ADMIN ONLY ================= -->
+            {% if request.user.is_superuser %}
+
+            <!-- Department -->
             <li class="nav-item has-treeview">
                 <a href="#" class="nav-link">
                     <i class="nav-icon fas fa-building"></i>
@@ -86,36 +91,54 @@
 
                 </ul>
             </li>
-            <!--Create Category-->
-        <li class="nav-item has-treeview">
-            <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-layer-group"></i>
-            <p>
-            KRA Setup
-            <i class="right fas fa-angle-left"></i>
-            </p>
-            </a>
 
-        <ul class="nav nav-treeview">
+            <!-- KRA Setup -->
+            <li class="nav-item has-treeview">
+                <a href="#" class="nav-link">
+                    <i class="nav-icon fas fa-layer-group"></i>
+                    <p>
+                        KRA Setup
+                        <i class="right fas fa-angle-left"></i>
+                    </p>
+                </a>
 
-        <li class="nav-item">
-            <a href="/kra/add-category/" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Add Category</p>
-            </a>
-        </li>
+                <ul class="nav nav-treeview">
 
-        <li class="nav-item">
-            <a href="/kra/add-task/" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Create Task</p>
-            </a>
-        </li>
+                    <li class="nav-item">
+                        <a href="/kra/categories/" class="nav-link">
+                            <i class="far fa-circle nav-icon"></i>
+                            <p>All Categories</p>
+                        </a>
+                    </li>
 
-        </ul>
-        </li>
+                    <li class="nav-item">
+                        <a href="/kra/add-category/" class="nav-link">
+                            <i class="far fa-circle nav-icon"></i>
+                            <p>Add Category</p>
+                        </a>
+                    </li>
 
-            <!-- Tasks Group -->
+                    <li class="nav-item">
+                        <a href="/kra/tasks/" class="nav-link">
+                            <i class="far fa-circle nav-icon"></i>
+                            <p>All Tasks</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/kra/add-task/" class="nav-link">
+                            <i class="far fa-circle nav-icon"></i>
+                            <p>Create Task</p>
+                        </a>
+                    </li>
+
+                </ul>
+            </li>
+
+            {% endif %}
+            <!-- ================= END ADMIN ================= -->
+
+            <!-- Tasks (Visible to ALL users) -->
             <li class="nav-item has-treeview">
                 <a href="#" class="nav-link">
                     <i class="nav-icon fas fa-tasks"></i>
@@ -134,12 +157,14 @@
                         </a>
                     </li>
 
+                    {% if request.user.is_superuser %}
                     <li class="nav-item">
                         <a href="/tasks/assign/" class="nav-link">
                             <i class="far fa-circle nav-icon"></i>
                             <p>Assign Task</p>
                         </a>
                     </li>
+                    {% endif %}
 
                 </ul>
             </li>
@@ -159,23 +184,19 @@
     </nav>
 
 </div>
-```
 
 </aside>
 
-<!-- Content Wrapper -->
+<!-- Content -->
 
 <div class="content-wrapper">
 
-```
-<!-- Header -->
 <section class="content-header">
     <div class="container-fluid">
         <h4 class="mb-2">{% block page_title %}Dashboard{% endblock %}</h4>
     </div>
 </section>
 
-<!-- Main Content -->
 <section class="content">
     <div class="container-fluid">
         {% block content %}
