@@ -1,16 +1,25 @@
 {% extends 'base.html' %}
 
 {% block page_title %}
-Add Employee
+{% if is_edit %}
+        Edit Employee
+    {% else %}
+        Add Employee
+    {% endif %}
 {% endblock %}
 
 {% block content %}
 
 <div class="card card-primary">
 
-```
 <div class="card-header">
-    <h3 class="card-title">Create Employee</h3>
+    <h3 class="card-title">
+    {% if is_edit %}
+        Edit Employee
+    {% else %}
+        Create Employee
+    {% endif %}
+    </h3>
 </div>
 
 <form method="post">
@@ -56,12 +65,16 @@ Add Employee
 
     <div class="card-footer text-right">
         <button class="btn btn-primary">
-            <i class="fas fa-user-plus"></i> Create Employee
+            {% if is_edit %}
+                <i class="fas fa-edit"></i> Update Employee
+            {% else %}
+                <i class="fas fa-user-plus"></i> Create Employee
+            {% endif %}
         </button>
     </div>
 
 </form>
-```
+
 
 </div>
 

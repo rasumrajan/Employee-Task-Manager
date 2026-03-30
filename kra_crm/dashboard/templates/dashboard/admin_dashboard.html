@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header">
+        <h3>Employee Performance</h3>
+    </div>
+
+```
+<div class="card-body">
+    <table class="table table-bordered">
+
+        <tr>
+            <th>Employee</th>
+            <th>Total</th>
+            <th>Completed</th>
+            <th>Late</th>
+            <th>Performance</th>
+        </tr>
+
+        {% for d in data %}
+        <tr>
+            <td>{{ d.employee.user.username }}</td>
+            <td>{{ d.total }}</td>
+            <td>{{ d.completed }}</td>
+            <td>{{ d.late }}</td>
+            <td>{{ d.performance }}%</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</div>
+```
+
+</div>
+
+{% endblock %}

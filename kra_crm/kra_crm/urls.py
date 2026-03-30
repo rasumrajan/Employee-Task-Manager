@@ -26,6 +26,7 @@ admin.site.index_title = "KRA"
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('accounts.urls')),
+    path('employees/', include('employees.urls')),
     path('kra/', include('kra.urls')),
     path('tasks/', include('tasks.urls')),
     path('dashboard/', include('dashboard.urls')),

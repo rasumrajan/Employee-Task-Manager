@@ -1,54 +1,23 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block page_title %}My Dashboard{% endblock %}
 
 {% block content %}
 
-<h2>My Tasks</h2>
+<div class="card">
+    <div class="card-body">
 
-<table class="table table-bordered">
+    <h4>My Performance</h4>
 
-<tr>
-<th>Task</th>
-<th>Status</th>
-<th>Progress</th>
-<th>Deadline</th>
-<th>Time Spent</th>
-<th>Actions</th>
-</tr>
+    <ul>
+        <li>Total Tasks: {{ total }}</li>
+        <li>Completed: {{ completed }}</li>
+        <li>Late: {{ late }}</li>
+        <li>Performance: {{ performance }}%</li>
+    </ul>
 
-{% for task in tasks %}
+</div>
 
-<tr>
-
-<td>{{ task.task.title }}</td>
-
-<td>{{ task.status }}</td>
-
-<td>{{ task.progress }}%</td>
-
-<td>{{ task.deadline }}</td>
-
-<td>{{ task.total_time_spent }} minutes</td>
-
-<td>
-
-<a href="{% url 'start_task' task.id %}" class="btn btn-success btn-sm">
-Start
-</a>
-
-<a href="{% url 'pause_task' task.id %}" class="btn btn-warning btn-sm">
-Pause
-</a>
-
-<a href="{% url 'complete_task' task.id %}" class="btn btn-primary btn-sm">
-Complete
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
+</div>
 
 {% endblock %}

@@ -25,10 +25,8 @@ def calculate_performance(tasks):
 @login_required
 def dashboard(request):
 
-    user = request.user
-
-    # Boss view
-    if user.is_superuser:
+    # ADMIN DASHBOARD
+    if request.user.is_superuser:
 
         employees = Employee.objects.all()
         data = []
@@ -36,7 +34,11 @@ def dashboard(request):
         for emp in employees:
             tasks = EmployeeTask.objects.filter(employee=emp)
 
-            performance, total, completed, late = calculate_performance(tasks)
+            total = tasks.count()
+            completed = tasks.filter(status='completed').count()
+            late = sum(1 for t in tasks if t.is_late())
+
+            performance = int((completed / total) * 100) if total > 0 else 0
 
             data.append({
                 'employee': emp,
@@ -46,23 +48,24 @@ def dashboard(request):
                 'performance': performance
             })
 
-        return render(request, 'dashboard/dashboard.html', {
-            'data': data,
-            'is_boss': True
-        })
+        return render(request, 'dashboard/admin_dashboard.html', {'data': data})
 
-    # Employee view
+    # EMPLOYEE DASHBOARD
     else:
 
-        tasks = EmployeeTask.objects.filter(employee__user=user)
+        employee = Employee.objects.get(user=request.user)
+        tasks = EmployeeTask.objects.filter(employee=employee)
 
-        performance, total, completed, late = calculate_performance(tasks)
+        total = tasks.count()
+        completed = tasks.filter(status='completed').count()
+        late = sum(1 for t in tasks if t.is_late())
 
-        return render(request, 'dashboard/dashboard.html', {
+        performance = int((completed / total) * 100) if total > 0 else 0
+
+        return render(request, 'dashboard/employee_dashboard.html', {
             'tasks': tasks,
             'total': total,
             'completed': completed,
             'late': late,
-            'performance': performance,
-            'is_boss': False
+            'performance': performance
         })
