@@ -2,18 +2,38 @@
 {% block page_title %}Admin Dashboard{% endblock %}
 
 {% block content %}
+
 <style>
+/* ===== KPI CARDS ===== */
 .kpi-card {
     background: #e76f2e;
-    padding: 15px;
-    margin: 5px;
-    font-weight: normal;
+    padding: 20px;
+    border-radius: 6px;
+    color: white;
+    text-align: center;
+    transition: 0.3s;
 }
 
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+
+.kpi-title {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.kpi-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* ===== GRAPH BOX ===== */
 .graph-box {
     background: #eeeeee;
     padding: 15px;
-    border-radius: 4px;
+    border-radius: 5px;
 }
 
 .graph-box canvas {
@@ -22,55 +42,79 @@
     height: 200px !important;
 }
 </style>
+
 <div class="container-fluid">
 
     <!-- ================= KPI CARDS ================= -->
-    <div class="row mb-4 text-center">
-
-        <div class="col-md-2 offset-md-1 kpi-card">Total Task<br>{{ total_tasks }}</div>
-        <div class="col-md-2 kpi-card">Completed Task<br>{{ completed_tasks }}</div>
-        <div class="col-md-2 kpi-card">Pending<br>{{ pending_tasks }}</div>
-        <div class="col-md-2 kpi-card">Late Task<br>{{ late_tasks }}</div>
-        <div class="col-md-2 kpi-card">Performance<br>{{ performance }}%</div>
-
-    </div>
-
-    <!-- ================= 3 GRAPH BOX ================= -->
     <div class="row mb-4">
 
-        <div class="col-md-4">
-            <div class="graph-box">
-                <h5 class="text-center">Accounts</h5>
-                <canvas id="accountsChart"></canvas>
+        <div class="col-md-2 offset-md-1">
+            <div class="kpi-card">
+                <div class="kpi-title">Total Task</div>
+                <div class="kpi-value">{{ total_tasks }}</div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="graph-box">
-                <h5 class="text-center">HR</h5>
-                <canvas id="hrChart"></canvas>
+        <div class="col-md-2">
+            <div class="kpi-card">
+                <div class="kpi-title">Completed</div>
+                <div class="kpi-value">{{ completed_tasks }}</div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="graph-box">
-                <h5 class="text-center">BackOffice</h5>
-                <canvas id="backofficeChart"></canvas>
+        <div class="col-md-2">
+            <div class="kpi-card">
+                <div class="kpi-title">Pending</div>
+                <div class="kpi-value">{{ pending_tasks }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card">
+                <div class="kpi-title">Late</div>
+                <div class="kpi-value">{{ late_tasks }}</div>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card">
+                <div class="kpi-title">Performance</div>
+                <div class="kpi-value">{{ performance }}%</div>
             </div>
         </div>
 
     </div>
 
-    <!-- ================= YOUR EXISTING TABLE ================= -->
+    <!-- ================= DYNAMIC DEPARTMENT GRAPHS ================= -->
+    <div class="row mb-4">
+
+        {% for dept in dept_chart %}
+        <div class="col-md-4">
+            <div class="graph-box">
+                <h5 class="text-center">
+                    <a href="{% url 'department_employees' dept.id %}">
+                        {{ dept.name }}
+                    </a>
+                </h5>
+                <canvas id="chart{{ forloop.counter }}"></canvas>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- ================= TABLE ================= -->
     <div class="row">
         <div class="col-md-12">
             <div class="card">
+
                 <div class="card-header">
                     <h3 class="card-title">Employee Performance</h3>
                 </div>
 
                 <div class="card-body">
                     <table class="table table-bordered table-hover table-striped">
+
                         <thead>
                             <tr>
                                 <th>Employee</th>
@@ -94,13 +138,45 @@
                                     </span>
                                 </td>
                             </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    No employee data found
+                                </td>
+                            </tr>
                             {% endfor %}
                         </tbody>
+
                     </table>
                 </div>
+
             </div>
         </div>
     </div>
 
 </div>
+
+<!-- ================= CHART SCRIPT ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const deptData = {{ dept_chart|safe }};
+
+deptData.forEach((dept, index) => {
+    new Chart(document.getElementById('chart' + (index + 1)), {
+        type: 'bar',
+        data: {
+            labels: ['Completed', 'Pending', 'Late'],
+            datasets: [{
+                label: dept.name,
+                data: dept.data
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+});
+</script>
+
 {% endblock %}
