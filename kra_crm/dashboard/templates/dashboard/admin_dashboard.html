@@ -1,40 +1,106 @@
 {% extends 'base.html' %}
-
 {% block page_title %}Admin Dashboard{% endblock %}
 
 {% block content %}
+<style>
+.kpi-card {
+    background: #e76f2e;
+    padding: 15px;
+    margin: 5px;
+    font-weight: normal;
+}
 
-<div class="card">
-    <div class="card-header">
-        <h3>Employee Performance</h3>
+.graph-box {
+    background: #eeeeee;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.graph-box canvas {
+    background: white;
+    border: 1px solid #ccc;
+    height: 200px !important;
+}
+</style>
+<div class="container-fluid">
+
+    <!-- ================= KPI CARDS ================= -->
+    <div class="row mb-4 text-center">
+
+        <div class="col-md-2 offset-md-1 kpi-card">Total Task<br>{{ total_tasks }}</div>
+        <div class="col-md-2 kpi-card">Completed Task<br>{{ completed_tasks }}</div>
+        <div class="col-md-2 kpi-card">Pending<br>{{ pending_tasks }}</div>
+        <div class="col-md-2 kpi-card">Late Task<br>{{ late_tasks }}</div>
+        <div class="col-md-2 kpi-card">Performance<br>{{ performance }}%</div>
+
     </div>
 
-```
-<div class="card-body">
-    <table class="table table-bordered">
+    <!-- ================= 3 GRAPH BOX ================= -->
+    <div class="row mb-4">
 
-        <tr>
-            <th>Employee</th>
-            <th>Total</th>
-            <th>Completed</th>
-            <th>Late</th>
-            <th>Performance</th>
-        </tr>
+        <div class="col-md-4">
+            <div class="graph-box">
+                <h5 class="text-center">Accounts</h5>
+                <canvas id="accountsChart"></canvas>
+            </div>
+        </div>
 
-        {% for d in data %}
-        <tr>
-            <td>{{ d.employee.user.username }}</td>
-            <td>{{ d.total }}</td>
-            <td>{{ d.completed }}</td>
-            <td>{{ d.late }}</td>
-            <td>{{ d.performance }}%</td>
-        </tr>
-        {% endfor %}
+        <div class="col-md-4">
+            <div class="graph-box">
+                <h5 class="text-center">HR</h5>
+                <canvas id="hrChart"></canvas>
+            </div>
+        </div>
 
-    </table>
+        <div class="col-md-4">
+            <div class="graph-box">
+                <h5 class="text-center">BackOffice</h5>
+                <canvas id="backofficeChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= YOUR EXISTING TABLE ================= -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Employee Performance</h3>
+                </div>
+
+                <div class="card-body">
+                    <table class="table table-bordered table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Total</th>
+                                <th>Completed</th>
+                                <th>Late</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for d in data %}
+                            <tr>
+                                <td>{{ d.employee.user.username }}</td>
+                                <td>{{ d.total }}</td>
+                                <td>{{ d.completed }}</td>
+                                <td>{{ d.late }}</td>
+                                <td>
+                                    <span class="badge badge-success">
+                                        {{ d.performance }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
-```
-
-</div>
-
 {% endblock %}

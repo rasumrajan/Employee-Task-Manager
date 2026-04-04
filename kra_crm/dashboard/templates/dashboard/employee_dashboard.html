@@ -4,20 +4,163 @@
 
 {% block content %}
 
+<div class="row">
+<!-- STATS -->
+<div class="col-md-6">
+    <div class="card">
+
+        <div class="card-header">
+            <h3 class="card-title">My Performance</h3>
+        </div>
+
+        <div class="card-body">
+
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between">
+                    Total Tasks
+                    <span class="badge badge-primary">{{ total }}</span>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between">
+                    Completed
+                    <span class="badge badge-success">{{ completed }}</span>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between">
+                    Late
+                    <span class="badge badge-danger">{{ late }}</span>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between">
+                    Performance
+                    <span class="badge badge-info">{{ performance }}%</span>
+                </li>
+            </ul>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- PIE CHART -->
+<div class="col-md-6">
+    <div class="card">
+
+        <div class="card-header">
+            <h3 class="card-title">Task Distribution</h3>
+        </div>
+
+        <div class="card-body">
+            <canvas id="taskChart"></canvas>
+        </div>
+
+    </div>
+</div>
+</div>
+<!-- WEEKLY PERFORMANCE -->
 <div class="card">
-    <div class="card-body">
+    <div class="card-header">
+        <h3 class="card-title">Weekly Performance</h3>
+    </div>
+<div class="card-body">
+    <canvas id="weeklyChart"></canvas>
+</div>
+</div>
 
-    <h4>My Performance</h4>
+<!-- TASK LIST -->
 
-    <ul>
-        <li>Total Tasks: {{ total }}</li>
-        <li>Completed: {{ completed }}</li>
-        <li>Late: {{ late }}</li>
-        <li>Performance: {{ performance }}%</li>
-    </ul>
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">My Tasks</h3>
+    </div>
+<div class="card-body">
+
+    <table class="table table-bordered table-hover table-striped">
+
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.task.title }}</td>
+                <td>
+                    {% if task.status == 'completed' %}
+                        <span class="badge badge-success">Completed</span>
+                    {% elif task.status == 'in_progress' %}
+                        <span class="badge badge-warning">In Progress</span>
+                    {% else %}
+                        <span class="badge badge-secondary">{{ task.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" class="text-center text-muted">
+                    No tasks assigned
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
 
 </div>
 
 </div>
+
+<!-- PIE CHART SCRIPT -->
+
+<script>
+    const completed = {{ completed }};
+    const late = {{ late }};
+    const pending = {{ total }} - completed;
+
+    new Chart(document.getElementById('taskChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Completed', 'Pending', 'Late'],
+            datasets: [{
+                data: [completed, pending, late]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+
+<!-- WEEKLY CHART SCRIPT -->
+
+<script>
+    const labels = {{ labels|safe }};
+    const data = {{ daily_performance|safe }};
+
+    new Chart(document.getElementById('weeklyChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Performance %',
+                data: data,
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100
+                }
+            }
+        }
+    });
+</script>
 
 {% endblock %}

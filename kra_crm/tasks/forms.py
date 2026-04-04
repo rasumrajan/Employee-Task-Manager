@@ -9,3 +9,5 @@ class EmployeeTaskForm(forms.ModelForm):
         widgets = {
             'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+        
+# single page no switch 

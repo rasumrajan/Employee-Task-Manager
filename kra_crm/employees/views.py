@@ -8,6 +8,7 @@ from .forms import EmployeeForm
 from tasks.models import EmployeeTask
 
 
+
 # ================= PERFORMANCE FUNCTION =================
 def calculate_performance(tasks):
 
@@ -160,3 +161,4 @@ def delete_employee(request, pk):
     employee.user.delete()
     messages.success(request, "Employee Deleted Successfully")
     return redirect('employee_list')
+
