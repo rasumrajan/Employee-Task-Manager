@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+    <!-- Cards -->
+    <div class="col-lg-2 col-6">
+        <div class="small-box bg-info">
+            <div class="inner">
+                <h4>{{ total_tasks }}</h4>
+                <p>Total</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-2 col-6">
+        <div class="small-box bg-success">
+            <div class="inner">
+                <h4>{{ completed_tasks }}</h4>
+                <p>Completed</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-2 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h4>{{ pending_tasks }}</h4>
+                <p>Pending</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-2 col-6">
+        <div class="small-box bg-primary">
+            <div class="inner">
+                <h4>{{ in_progress_tasks }}</h4>
+                <p>In Progress</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-2 col-6">
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h4>{{ overdue_tasks }}</h4>
+                <p>Overdue</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- FILTER BUTTONS -->
+<div class="mb-3">
+    <a href="?status=" class="btn btn-secondary btn-sm">All</a>
+    <a href="?status=pending" class="btn btn-warning btn-sm">Pending</a>
+    <a href="?status=in_progress" class="btn btn-primary btn-sm">In Progress</a>
+    <a href="?status=completed" class="btn btn-success btn-sm">Completed</a>
+</div>
+
+
+<!-- PERFORMANCE -->
+<div class="card">
+    <div class="card-header bg-dark text-white">
+        <h5>Performance</h5>
+    </div>
+
+    <div class="card-body text-center">
+
+        <h2>{{ performance }}%</h2>
+
+        <div class="progress">
+            <div class="progress-bar bg-success" style="width: {{ performance }}%">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- CHART -->
+<div class="card mt-3">
+    <div class="card-header bg-info text-white">
+        <h5>Task Distribution</h5>
+    </div>
+
+    <div class="card-body">
+        <canvas id="taskChart"></canvas>
+    </div>
+</div>
+
+
+<!-- TASK TABLE -->
+<div class="card mt-3">
+    <div class="card-header bg-primary text-white">
+        <h5>Tasks</h5>
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Progress</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for task in recent_tasks %}
+                <tr {% if task.is_overdue %} style="background-color:#ffe6e6;" {% endif %}>
+                    
+                    <td>{{ task.task.title }}</td>
+
+                    <td>
+                        <span class="badge 
+                            {% if task.status == 'completed' %}bg-success
+                            {% elif task.status == 'in_progress' %}bg-primary
+                            {% elif task.status == 'pending' %}bg-warning
+                            {% else %}bg-secondary
+                            {% endif %}
+                        ">
+                            {{ task.status }}
+                        </span>
+                    </td>
+
+                    <td>{{ task.deadline }}</td>
+
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: {{ task.progress }}%">
+                                {{ task.progress }}%
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+</div>
+
+
+<!-- CHART JS -->
+<script>
+var ctx = document.getElementById('taskChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Completed', 'Pending', 'In Progress'],
+        datasets: [{
+            data: [{{ completed_tasks }}, {{ pending_tasks }}, {{ in_progress_tasks }}],
+        }]
+    }
+});
+</script>
+
+{% endblock %}

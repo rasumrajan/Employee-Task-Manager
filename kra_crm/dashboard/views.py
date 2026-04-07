@@ -1,38 +1,9 @@
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
-from employees.models import Employee
-from tasks.models import EmployeeTask
-from datetime import timedelta
-from django.utils import timezone
-
-
-# ================= PERFORMANCE FUNCTION =================
-def calculate_performance(tasks):
-    total = tasks.count()
-
-    completed = tasks.filter(status='completed').count()
-
-    late = tasks.filter(
-        status='completed',
-        completed_at__gt=F('deadline')
-    ).count()
-
-    if total == 0:
-        return 0, total, completed, late
-
-    on_time = completed - late
-    performance = int((on_time / total) * 100)
-
-    return performance, total, completed, late
-
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.db.models import F
 from employees.models import Employee, Department
-from tasks.models import EmployeeTask
-from datetime import timedelta
+from tasks.models import TaskAssignment
+from datetime import date, timedelta
 from django.utils import timezone
 
 
@@ -56,6 +27,7 @@ def calculate_performance(tasks):
     return performance, total, completed, late
 
 
+# ================= DASHBOARD =================
 @login_required
 def dashboard(request):
 
@@ -63,11 +35,10 @@ def dashboard(request):
     if request.user.is_superuser:
 
         employees = Employee.objects.select_related('user', 'department')
-        all_tasks = EmployeeTask.objects.select_related('employee__department')
+        all_tasks = TaskAssignment.objects.select_related('employee__department')
 
         data = []
 
-        # -------- TABLE DATA --------
         for emp in employees:
             tasks = all_tasks.filter(employee=emp)
 
@@ -81,7 +52,7 @@ def dashboard(request):
                 'performance': performance
             })
 
-        # ================= KPI CALCULATION =================
+        # ================= KPI =================
         total_tasks = all_tasks.count()
 
         completed_tasks = all_tasks.filter(status__iexact='completed').count()
@@ -92,12 +63,9 @@ def dashboard(request):
             completed_at__gt=F('deadline')
         ).count()
 
-        if total_tasks > 0:
-            overall_performance = int(((completed_tasks - late_tasks) / total_tasks) * 100)
-        else:
-            overall_performance = 0
+        overall_performance = int(((completed_tasks - late_tasks) / total_tasks) * 100) if total_tasks > 0 else 0
 
-        # ================= WEEKLY COMPARISON =================
+        # ================= WEEKLY =================
         today = timezone.now().date()
 
         chart_labels = []
@@ -108,7 +76,6 @@ def dashboard(request):
             chart_labels.append(day.strftime("%d %b"))
 
         for emp in employees:
-
             emp_tasks = all_tasks.filter(employee=emp)
             emp_data = []
 
@@ -121,14 +88,9 @@ def dashboard(request):
                 )
 
                 total_day = day_tasks.count()
-                late_day = day_tasks.filter(
-                    completed_at__gt=F('deadline')
-                ).count()
+                late_day = day_tasks.filter(completed_at__gt=F('deadline')).count()
 
-                if total_day == 0:
-                    performance_day = 0
-                else:
-                    performance_day = int(((total_day - late_day) / total_day) * 100)
+                performance_day = int(((total_day - late_day) / total_day) * 100) if total_day > 0 else 0
 
                 emp_data.append(performance_day)
 
@@ -140,9 +102,7 @@ def dashboard(request):
         # ================= DEPARTMENT GRAPH =================
         dept_chart = []
 
-        departments = Department.objects.all()
-
-        for dept in departments:
+        for dept in Department.objects.all():
             dept_tasks = all_tasks.filter(employee__department=dept)
 
             completed = dept_tasks.filter(status__iexact='completed').count()
@@ -166,14 +126,12 @@ def dashboard(request):
             'chart_labels': chart_labels,
             'employee_chart_data': employee_chart_data,
 
-            # KPI
             'total_tasks': total_tasks,
             'completed_tasks': completed_tasks,
             'pending_tasks': pending_tasks,
             'late_tasks': late_tasks,
             'performance': overall_performance,
 
-            # Department Graph
             'dept_chart': dept_chart,
         })
 
@@ -185,7 +143,7 @@ def dashboard(request):
             employee = Employee.objects.get(user=request.user)
         except Employee.DoesNotExist:
             return render(request, 'dashboard/employee_dashboard.html', {
-                'tasks': [],
+                'task_data': [],
                 'total': 0,
                 'completed': 0,
                 'late': 0,
@@ -194,10 +152,50 @@ def dashboard(request):
                 'daily_performance': []
             })
 
-        tasks = EmployeeTask.objects.filter(employee=employee)
+        # ✅ IMPORTANT FIX (ONLY EMPLOYEE TASKS)
+        tasks = TaskAssignment.objects.filter(employee=employee)
 
         performance, total, completed, late = calculate_performance(tasks)
 
+        # ================= TASK DETAILS =================
+        task_data = []
+
+        for task in tasks:
+
+            status = task.status
+            assigned_on = task.assigned_at if task.assigned_at else None
+            deadline = task.deadline
+
+            # Pending Days
+            if assigned_on and status.lower() != 'completed':
+                pending_days = (date.today() - assigned_on.date()).days
+            else:
+                pending_days = 0
+
+            # On Time
+            if task.completed_at and deadline:
+                on_time = task.completed_at <= deadline
+            else:
+                on_time = False
+
+            # Performance
+            if status.lower() == 'completed':
+                task_performance = 100 if on_time else 50
+            else:
+                task_performance = 0
+
+            task_data.append({
+                "task": task,
+                "status": status,
+                "assigned_on": assigned_on,
+                "deadline": deadline,
+                "pending_days": pending_days,
+                "on_time": "Yes" if on_time else "No",
+                "performance": task_performance,
+                "score": task_performance
+            })
+
+        # ================= WEEKLY =================
         today = timezone.now().date()
 
         labels = []
@@ -212,20 +210,15 @@ def dashboard(request):
             )
 
             total_day = day_tasks.count()
-            late_day = day_tasks.filter(
-                completed_at__gt=F('deadline')
-            ).count()
+            late_day = day_tasks.filter(completed_at__gt=F('deadline')).count()
 
-            if total_day == 0:
-                performance_day = 0
-            else:
-                performance_day = int(((total_day - late_day) / total_day) * 100)
+            performance_day = int(((total_day - late_day) / total_day) * 100) if total_day > 0 else 0
 
             labels.append(day.strftime("%d %b"))
             daily_performance.append(performance_day)
 
         return render(request, 'dashboard/employee_dashboard.html', {
-            'tasks': tasks,
+            'task_data': task_data,
             'total': total,
             'completed': completed,
             'late': late,
@@ -233,8 +226,9 @@ def dashboard(request):
             'labels': labels,
             'daily_performance': daily_performance,
         })
-        
-#=======Department View Employee============
+
+
+# ================= DEPARTMENT VIEW =================
 @login_required
 def department_employees(request, dept_id):
 
@@ -245,7 +239,7 @@ def department_employees(request, dept_id):
     data = []
 
     for emp in employees:
-        tasks = EmployeeTask.objects.filter(employee=emp)
+        tasks = TaskAssignment.objects.filter(employee=emp)
 
         total = tasks.count()
         completed = tasks.filter(status__iexact='completed').count()

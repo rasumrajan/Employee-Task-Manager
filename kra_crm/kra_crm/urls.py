@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.conf.urls.static import static
+from kra_crm import settings
 
 # Set the site header to an empty string to remove the text
 admin.site.site_header = "OM SAI KRA" 
@@ -32,4 +34,6 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('department/',include('department.urls')),
     
-]
+] 
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,52 +1,203 @@
 {% extends 'base.html' %}
-{% block page_title %}{{ department.name }} Employees{% endblock %}
+
+{% block page_title %}My Dashboard{% endblock %}
 
 {% block content %}
 
-<div class="container-fluid">
+<div class="row">
 
-    <h3 class="mb-3">{{ department.name }} - Employees</h3>
-
+<!-- ================= STATS ================= -->
+<div class="col-md-6">
     <div class="card">
+
+        <div class="card-header">
+            <h3 class="card-title">My Performance</h3>
+        </div>
+
         <div class="card-body">
 
-            <table class="table table-bordered table-striped">
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between">
+                    Total Tasks
+                    <span class="badge badge-primary">{{ total }}</span>
+                </li>
 
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Total Tasks</th>
-                        <th>Completed</th>
-                        <th>Late</th>
-                        <th>Performance</th>
-                    </tr>
-                </thead>
+                <li class="list-group-item d-flex justify-content-between">
+                    Completed
+                    <span class="badge badge-success">{{ completed }}</span>
+                </li>
 
-                <tbody>
-                    {% for d in data %}
-                    <tr>
-                        <td>{{ d.employee.user.username }}</td>
-                        <td>{{ d.total }}</td>
-                        <td>{{ d.completed }}</td>
-                        <td>{{ d.late }}</td>
-                        <td>
-                            <span class="badge badge-success">
-                                {{ d.performance }}%
-                            </span>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">No employees found</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                <li class="list-group-item d-flex justify-content-between">
+                    Late
+                    <span class="badge badge-danger">{{ late }}</span>
+                </li>
 
-            </table>
+                <li class="list-group-item d-flex justify-content-between">
+                    Performance
+                    <span class="badge badge-info">{{ performance }}%</span>
+                </li>
+            </ul>
 
         </div>
+
     </div>
+</div>
+
+<!-- ================= PIE CHART ================= -->
+<div class="col-md-6">
+    <div class="card">
+
+        <div class="card-header">
+            <h3 class="card-title">Task Distribution</h3>
+        </div>
+
+        <div class="card-body">
+            <canvas id="taskChart"></canvas>
+        </div>
+
+    </div>
+</div>
 
 </div>
+
+<!-- ================= WEEKLY PERFORMANCE ================= -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Weekly Performance</h3>
+    </div>
+
+    <div class="card-body">
+        <canvas id="weeklyChart"></canvas>
+    </div>
+</div>
+
+<!-- ================= TASK TABLE (UPDATED) ================= -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">My Tasks</h3>
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered table-hover table-striped">
+
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Assigned On</th>
+                    <th>Pending Days</th>
+                    <th>Deadline</th>
+                    <th>On Time</th>
+                    <th>Performance</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in task_data %}
+                <tr>
+                    <td>{{ t.task.title }}</td>
+
+                    <td>
+                        {% if t.status|lower == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif t.status|lower == 'pending' %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% else %}
+                            <span class="badge badge-secondary">{{ t.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if t.assigned_on %}
+                            {{ t.assigned_on|date:"d M Y" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>{{ t.pending_days }}</td>
+
+                    <td>{{ t.deadline|date:"d M Y" }}</td>
+
+                    <td>
+                        {% if t.on_time == "Yes" %}
+                            <span class="badge badge-success">Yes</span>
+                        {% else %}
+                            <span class="badge badge-danger">No</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ t.performance }}%</td>
+
+                    <td>
+                        <span class="badge badge-info">
+                            {{ t.score }}
+                        </span>
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        No tasks assigned
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+</div>
+
+<!-- ================= PIE CHART SCRIPT ================= -->
+<script>
+    const completed = {{ completed }};
+    const late = {{ late }};
+    const pending = {{ total }} - completed;
+
+    new Chart(document.getElementById('taskChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Completed', 'Pending', 'Late'],
+            datasets: [{
+                data: [completed, pending, late]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+
+<!-- ================= WEEKLY CHART SCRIPT ================= -->
+<script>
+    const labels = {{ labels|safe }};
+    const data = {{ daily_performance|safe }};
+
+    new Chart(document.getElementById('weeklyChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Performance %',
+                data: data,
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100
+                }
+            }
+        }
+    });
+</script>
 
 {% endblock %}

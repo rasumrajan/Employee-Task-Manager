@@ -1,61 +1,112 @@
 {% extends 'base.html' %}
 
 {% block page_title %}
-Categories
+KRA Categories
 {% endblock %}
 
 {% block content %}
 
-<div class="card">
+<div class="card shadow-sm">
 
-```
-<div class="card-header">
-    <h3 class="card-title">KRA Categories</h3>
+    <!-- Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-layer-group"></i> KRA Categories
+        </h5>
 
-    <a href="{% url 'add_category' %}" class="btn btn-primary btn-sm float-right">
-        <i class="fas fa-plus"></i> Add Category
-    </a>
-</div>
+        <a href="{% url 'add_kra_category' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Add Category
+        </a>
+    </div>
 
-<div class="card-body">
+    <!-- Body -->
+    <div class="card-body p-0">
 
-    <table class="table table-bordered table-hover">
+        {% if categories %}
+        <div class="table-responsive">
 
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Description</th>
-                <th>Action</th>
-            </tr>
-        </thead>
+            <table class="table table-hover mb-0">
 
-        <tbody>
-            {% for c in categories %}
-            <tr>
-                <td>{{ c.name }}</td>
-                <td>{{ c.department.name }}</td>
-                <td>{{ c.description }}</td>
+                <thead class="thead-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
 
-                <td>
-                  <a href="{% url 'update_category' c.id %}" class="btn btn-warning btn-sm">
-                      <i class="fas fa-edit"></i>
-                  </a>
+                <tbody>
+                    {% for c in categories %}
+                    <tr>
 
-                  <a href="{% url 'delete_category' c.id %}" 
-                    onclick="return confirm('Are you sure to delete?')"
-                    class="btn btn-danger btn-sm">
-                      <i class="fas fa-trash"></i>
-                  </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+                        <!-- Name -->
+                        <td>
+                            <strong>{{ c.name }}</strong>
+                        </td>
 
-    </table>
+                        <!-- Department -->
+                        <td>
+                            <span class="badge badge-info">
+                                {{ c.department.name }}
+                            </span>
+                        </td>
 
-</div>
-```
+                        <!-- Status -->
+                        <td>
+                            {% if c.status == 'active' %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Description -->
+                        <td>
+                            {{ c.description|default:"-" }}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-center">
+
+                            <a href="{% url 'update_kra_category' c.id %}" 
+                               class="btn btn-warning btn-sm mr-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            <a href="{% url 'delete_kra_category' c.id %}" 
+                               onclick="return confirm('Are you sure to delete this category?')"
+                               class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <!-- Empty State -->
+        <div class="text-center p-5">
+            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+            <h5>No Categories Found</h5>
+            <p class="text-muted">Start by adding your first KRA category.</p>
+
+            <a href="{% url 'add_kra_category' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Add Category
+            </a>
+        </div>
+
+        {% endif %}
+
+    </div>
 
 </div>
 

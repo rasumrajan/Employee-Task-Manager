@@ -1,34 +1,29 @@
 from django import forms
+from datetime import timedelta
 from .models import KRACategory, KRATask
 
 
-#  CATEGORY FORM
+# ================= CATEGORY FORM =================
 class KRACategoryForm(forms.ModelForm):
 
     class Meta:
         model = KRACategory
-        fields = ['name', 'department', 'description']
+        fields = ['name', 'department', 'description', 'status']
 
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter category name'
-            }),
-
-            'department': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Enter description'
-            }),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'department': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
         }
 
 
-#  TASK FORM
+# ================= TASK FORM =================
 class KRATaskForm(forms.ModelForm):
+
+    days = forms.IntegerField(required=False, min_value=0)
+    hours = forms.IntegerField(required=False, min_value=0)
+    minutes = forms.IntegerField(required=False, min_value=0)
 
     class Meta:
         model = KRATask
@@ -37,36 +32,31 @@ class KRATaskForm(forms.ModelForm):
             'title',
             'description',
             'frequency',
-            'expected_minutes',
             'max_score'
         ]
 
-        widgets = {
-            'category': forms.Select(attrs={
-                'class': 'form-control'
-            }),
+    def clean(self):
+        cleaned_data = super().clean()
 
-            'title': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter task title'
-            }),
+        days = cleaned_data.get('days') or 0
+        hours = cleaned_data.get('hours') or 0
+        minutes = cleaned_data.get('minutes') or 0
 
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Enter task description'
-            }),
+        if days == 0 and hours == 0 and minutes == 0:
+            raise forms.ValidationError("Enter duration")
 
-            'frequency': forms.Select(attrs={
-                'class': 'form-control'
-            }),
+        return cleaned_data
 
-            'expected_minutes': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Expected time in minutes'
-            }),
+    def save(self, commit=True):
+        instance = super().save(commit=False)
 
-            'max_score': forms.NumberInput(attrs={
-                'class': 'form-control'
-            }),
-        }
+        instance.expected_duration = timedelta(
+            days=self.cleaned_data.get('days') or 0,
+            hours=self.cleaned_data.get('hours') or 0,
+            minutes=self.cleaned_data.get('minutes') or 0
+        )
+
+        if commit:
+            instance.save()
+
+        return instance

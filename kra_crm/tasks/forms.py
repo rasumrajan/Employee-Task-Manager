@@ -1,13 +1,31 @@
 from django import forms
-from .models import EmployeeTask
+from .models import TaskAssignment
+from kra.models import KRATask
 
 
-class EmployeeTaskForm(forms.ModelForm):
+class TaskAssignForm(forms.ModelForm):
+
     class Meta:
-        model = EmployeeTask
-        fields = ['employee', 'task', 'deadline', 'status', 'progress']
+        model = TaskAssignment
+        fields = ['employee', 'task', 'deadline', 'priority']
+
         widgets = {
             'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
-        
-# single page no switch 
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        #  IMPORTANT FIX
+        self.fields['task'].queryset = KRATask.objects.all()
+
+        # Optional UX improvement
+        self.fields['task'].empty_label = "Select Task"
+
+
+# 🔹 Employee Update Form
+class TaskUpdateForm(forms.ModelForm):
+
+    class Meta:
+        model = TaskAssignment
+        fields = ['status', 'progress', 'remarks']

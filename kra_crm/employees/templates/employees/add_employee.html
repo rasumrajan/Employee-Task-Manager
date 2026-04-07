@@ -1,81 +1,171 @@
 {% extends 'base.html' %}
 
 {% block page_title %}
-{% if is_edit %}
-        Edit Employee
-    {% else %}
-        Add Employee
-    {% endif %}
+{% if is_edit %}Update Employee{% else %}Add Employee{% endif %}
 {% endblock %}
 
 {% block content %}
 
-<div class="card card-primary">
+<div class="row justify-content-center">
+    <div class="col-lg-10">
 
-<div class="card-header">
-    <h3 class="card-title">
-    {% if is_edit %}
-        Edit Employee
-    {% else %}
-        Create Employee
-    {% endif %}
-    </h3>
-</div>
+        <div class="card shadow-sm">
 
-<form method="post">
-    {% csrf_token %}
+            <!-- Header -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus"></i>
+                    {% if is_edit %}Update Employee{% else %}Add New Employee{% endif %}
+                </h5>
 
-    <div class="card-body">
-
-        <div class="row">
-
-            <div class="col-md-6">
-                <label>Username</label>
-                {{ form.username }}
+                <a href="{% url 'employee_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
             </div>
 
-            <div class="col-md-6">
-                <label>Password</label>
-                {{ form.password }}
-            </div>
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
 
-            <div class="col-md-6 mt-2">
-                <label>Department</label>
-                {{ form.department }}
-            </div>
+                <div class="card-body">
 
-            <div class="col-md-6 mt-2">
-                <label>Designation</label>
-                {{ form.designation }}
-            </div>
+                    <!-- Error Message -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please fix the errors below.</strong>
+                    </div>
+                    {% endif %}
 
-            <div class="col-md-6 mt-2">
-                <label>Phone</label>
-                {{ form.phone }}
-            </div>
+                    <!-- ================= USER INFO ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-user"></i> Login Information
+                    </h6>
 
-            <div class="col-md-6 mt-2">
-                <label>Join Date</label>
-                {{ form.join_date }}
-            </div>
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Username</label>
+                                {{ form.username }}
+                                <small class="text-danger">{{ form.username.errors }}</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Password</label>
+                                {{ form.password }}
+                                <small class="text-muted">Leave blank while editing</small>
+                                <small class="text-danger">{{ form.password.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <!-- ================= EMPLOYEE INFO ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-id-badge"></i> Employee Information
+                    </h6>
+
+                    <div class="row">
+
+                        <!-- Employee ID -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Employee ID</label>
+                                {{ form.emp_id }}
+                                <small class="text-danger">{{ form.emp_id.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Department -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Department</label>
+                                {{ form.department }}
+                                <small class="text-danger">{{ form.department.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Designation -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Designation</label>
+                                {{ form.designation }}
+                                <small class="text-danger">{{ form.designation.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Phone</label>
+                                {{ form.phone }}
+                                <small class="text-danger">{{ form.phone.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Join Date -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Join Date</label>
+                                {{ form.join_date }}
+                                <small class="text-danger">{{ form.join_date.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Role -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Role</label>
+                                {{ form.role }}
+                                <small class="text-danger">{{ form.role.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Status</label>
+                                {{ form.status }}
+                                <small class="text-danger">{{ form.status.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Profile Image -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Profile Image</label>
+                                {{ form.profile_image }}
+                                <small class="text-danger">{{ form.profile_image.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer d-flex justify-content-between">
+
+                    <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+
+                    <button class="btn btn-success">
+                        <i class="fas fa-save"></i>
+                        {% if is_edit %}Update Employee{% else %}Save Employee{% endif %}
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
 
     </div>
-
-    <div class="card-footer text-right">
-        <button class="btn btn-primary">
-            {% if is_edit %}
-                <i class="fas fa-edit"></i> Update Employee
-            {% else %}
-                <i class="fas fa-user-plus"></i> Create Employee
-            {% endif %}
-        </button>
-    </div>
-
-</form>
-
-
 </div>
 
 {% endblock %}

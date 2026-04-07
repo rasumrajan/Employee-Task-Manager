@@ -1,86 +1,157 @@
 {% extends 'base.html' %}
 
 {% block page_title %}
-Create Task
+{% if is_edit %}Update Task{% else %}Create Task Template{% endif %}
 {% endblock %}
 
 {% block content %}
 
-<div class="card card-success">
+<div class="row justify-content-center">
+    <div class="col-lg-10">
 
-```
-<div class="card-header">
-    <h3 class="card-title">Create KRA Task</h3>
-</div>
+        <div class="card shadow-sm">
 
-<form method="post">
-    {% csrf_token %}
+            <!-- Header -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group"></i>
+                    {% if is_edit %}Update Task Template{% else %}Create Task Template{% endif %}
+                </h5>
 
-    <div class="card-body">
-
-        <div class="row">
-
-            <!-- Category -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label><i class="fas fa-list"></i> Category</label>
-                    {{ form.category }}
-                </div>
+                <a href="{% url 'kra_categories' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
             </div>
 
-            <!-- Title -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label><i class="fas fa-tasks"></i> Task Title</label>
-                    {{ form.title }}
-                </div>
-            </div>
+            <!-- Form -->
+            <form method="post">
+                {% csrf_token %}
 
-            <!-- Frequency -->
-            <div class="col-md-6 mt-2">
-                <div class="form-group">
-                    <label><i class="fas fa-sync"></i> Frequency</label>
-                    {{ form.frequency }}
-                </div>
-            </div>
+                <div class="card-body">
 
-            <!-- Expected Time -->
-            <div class="col-md-6 mt-2">
-                <div class="form-group">
-                    <label><i class="fas fa-clock"></i> Expected Minutes</label>
-                    {{ form.expected_minutes }}
-                </div>
-            </div>
+                    <!-- Error -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please fix the errors below.</strong>
+                    </div>
+                    {% endif %}
 
-            <!-- Score -->
-            <div class="col-md-6 mt-2">
-                <div class="form-group">
-                    <label><i class="fas fa-star"></i> Max Score</label>
-                    {{ form.max_score }}
-                </div>
-            </div>
+                    <!-- ================= BASIC INFO ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-info-circle"></i> Task Information
+                    </h6>
 
-            <!-- Description -->
-            <div class="col-md-12 mt-2">
-                <div class="form-group">
-                    <label><i class="fas fa-align-left"></i> Description</label>
-                    {{ form.description }}
+                    <div class="row">
+
+                        <!-- Category -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Category</label>
+                                {{ form.category }}
+                            </div>
+                        </div>
+
+                        <!-- Frequency -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Frequency</label>
+                                {{ form.frequency }}
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Task Title</label>
+                                {{ form.title }}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Description</label>
+                                {{ form.description }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <!-- ================= TIME ESTIMATION ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-clock"></i> Time Estimation
+                    </h6>
+
+                    <div class="row">
+
+                        <div class="col-md-4">
+                            <label>Days</label>
+                            {{ form.days }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Hours</label>
+                            {{ form.hours }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Minutes</label>
+                            {{ form.minutes }}
+                        </div>
+
+                    </div>
+
+                    <small class="text-muted">
+                        Example: 1 day 2 hours = Enter 1 in days, 2 in hours
+                    </small>
+
+                    <hr>
+
+                    <!-- ================= SCORING ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-star"></i> Performance Settings
+                    </h6>
+
+                    <div class="row">
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Max Score</label>
+                                {{ form.max_score }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Info -->
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        This task will be used as a template and assigned to employees later.
+                    </div>
+
                 </div>
-            </div>
+
+                <!-- Footer -->
+                <div class="card-footer d-flex justify-content-between">
+
+                    <a href="{% url 'kra_categories' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+
+                    <button class="btn btn-success">
+                        <i class="fas fa-save"></i>
+                        {% if is_edit %}Update Task{% else %}Save Task{% endif %}
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
 
     </div>
-
-    <div class="card-footer text-right">
-        <button class="btn btn-success">
-            <i class="fas fa-plus"></i> Create Task
-        </button>
-    </div>
-
-</form>
-```
-
 </div>
 
 {% endblock %}

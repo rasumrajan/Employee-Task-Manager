@@ -6,70 +6,119 @@ Assign Task
 
 {% block content %}
 
-<div class="card card-primary">
-<div class="card-header">
-    <h3 class="card-title">Assign New Task</h3>
-</div>
+<div class="row justify-content-center">
+    <div class="col-lg-10">
 
-<form method="post">
-    {% csrf_token %}
+        <div class="card shadow-sm">
 
-    <div class="card-body">
+            <!-- Header -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks"></i> Assign New Task
+                </h5>
 
-        <div class="row">
-
-            <!-- Employee -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Employee</label>
-                    {{ form.employee }}
-                </div>
+                <a href="{% url 'all_tasks' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
             </div>
 
-            <!-- Task -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Task</label>
-                    {{ form.task }}
-                </div>
-            </div>
+            <!-- Form -->
+            <form method="post">
+                {% csrf_token %}
 
-            <!-- Deadline -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Deadline</label>
-                    {{ form.deadline }}
-                </div>
-            </div>
+                <div class="card-body">
 
-            <!-- Status -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Status</label>
-                    {{ form.status }}
-                </div>
-            </div>
+                    <!-- Error -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please fix the errors below.</strong>
+                    </div>
+                    {% endif %}
 
-            <!-- Progress -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Progress (%)</label>
-                    {{ form.progress }}
+                    <!-- ================= TASK INFO ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-clipboard-list"></i> Task Details
+                    </h6>
+
+                    <div class="row">
+
+                        <!-- Employee -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Assign To</label>
+                                {{ form.employee }}
+                                <small class="text-danger">{{ form.employee.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Task Template -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fas fa-list"></i> Task</label>
+                                {{ form.task }}
+                                <small class="text-danger">{{ form.task.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <!-- ================= DEADLINE ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-calendar-alt"></i> Schedule
+                    </h6>
+
+                    <div class="row">
+
+                        <!-- Deadline -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Deadline</label>
+                                {{ form.deadline }}
+                                <small class="text-danger">{{ form.deadline.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Priority</label>
+                                {{ form.priority }}
+                                <small class="text-danger">{{ form.priority.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <!-- Info Box -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Once assigned, employee will manage progress. Admin can approve after completion.
+                    </div>
+
                 </div>
-            </div>
+
+                <!-- Footer -->
+                <div class="card-footer d-flex justify-content-between">
+
+                    <a href="{% url 'all_tasks' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+
+                    <button class="btn btn-success">
+                        <i class="fas fa-check"></i> Assign Task
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
 
     </div>
-
-    <div class="card-footer text-right">
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check"></i> Assign Task
-        </button>
-    </div>
-
-</form>
-
 </div>
 
 {% endblock %}

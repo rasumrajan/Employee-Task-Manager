@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block page_title %}All Tasks{% endblock %}
+{% block header_title %}All Tasks{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+
+    <div class="card-header bg-primary text-white">
+        <h5><i class="fas fa-tasks"></i> Task Performance Dashboard</h5>
+    </div>
+
+    <div class="card-body table-responsive">
+
+        <table class="table table-bordered table-hover table-sm">
+
+            <thead class="thead-dark">
+                <tr>
+                    <th>Emp ID</th>
+                    <th>Name</th>
+                    <th>Task</th>
+                    <th>Priority</th>
+                    <th>Assigned</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>Completed</th>
+                    <th>Total Time</th>
+                    <th>Delay</th>
+                    <th>Performance</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for t in tasks %}
+                <tr>
+
+                    <td>{{ t.employee.emp_id }}</td>
+                    <td>{{ t.employee.user.username }}</td>
+                    <td>{{ t.task.title }}</td>
+
+                    <td>
+                        <span class="badge 
+                            {% if t.priority == 'high' %}badge-danger
+                            {% elif t.priority == 'medium' %}badge-warning
+                            {% else %}badge-success{% endif %}">
+                            {{ t.priority }}
+                        </span>
+                    </td>
+
+                    <td>{{ t.assigned_date }}</td>
+                    <td>{{ t.deadline }}</td>
+
+                    <td>{{ t.status }}</td>
+
+                    <td>{{ t.completed_at|default:"-" }}</td>
+
+                    <td>{{ t.total_duration }}</td>
+
+                    <td>
+                        {% if t.is_late %}
+                            <span class="text-danger">Late</span>
+                        {% else %}
+                            <span class="text-success">On Time</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ t.performance_score }}%
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

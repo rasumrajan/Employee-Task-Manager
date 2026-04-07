@@ -1,12 +1,13 @@
-from django.shortcuts import render, redirect
+from datetime import timezone
+
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import F
-from django.contrib.auth.models import User
 from django.contrib import messages
+
 from .models import Employee
 from .forms import EmployeeForm
-from tasks.models import EmployeeTask
-
+from tasks.models import TaskAssignment
 
 
 # ================= PERFORMANCE FUNCTION =================
@@ -30,59 +31,6 @@ def calculate_performance(tasks):
     return performance, total, completed, late
 
 
-# ================= DASHBOARD =================
-@login_required
-def dashboard(request):
-
-    # ---------- ADMIN ----------
-    if request.user.is_superuser:
-
-        employees = Employee.objects.select_related('user').all()
-        data = []
-
-        for emp in employees:
-            tasks = EmployeeTask.objects.filter(employee=emp)
-
-            performance, total, completed, late = calculate_performance(tasks)
-
-            data.append({
-                'employee': emp,
-                'total': total,
-                'completed': completed,
-                'late': late,
-                'performance': performance
-            })
-
-        return render(request, 'dashboard/admin_dashboard.html', {'data': data})
-
-
-    # ---------- EMPLOYEE ----------
-    else:
-
-        try:
-            employee = Employee.objects.get(user=request.user)
-        except Employee.DoesNotExist:
-            return render(request, 'dashboard/employee_dashboard.html', {
-                'tasks': [],
-                'total': 0,
-                'completed': 0,
-                'late': 0,
-                'performance': 0
-            })
-
-        tasks = EmployeeTask.objects.filter(employee=employee)
-
-        performance, total, completed, late = calculate_performance(tasks)
-
-        return render(request, 'dashboard/employee_dashboard.html', {
-            'tasks': tasks,
-            'total': total,
-            'completed': completed,
-            'late': late,
-            'performance': performance
-        })
-
-
 # ================= ADMIN CHECK =================
 def is_admin(user):
     return user.is_superuser
@@ -93,35 +41,19 @@ def is_admin(user):
 @user_passes_test(is_admin)
 def add_employee(request):
 
-    form = EmployeeForm(request.POST or None)
+    form = EmployeeForm(request.POST or None, request.FILES or None)
 
     if form.is_valid():
-
-        username = form.cleaned_data['username']
-        password = form.cleaned_data['password']
-
-        # Prevent duplicate username
-        if User.objects.filter(username=username).exists():
-            form.add_error('username', 'Username already exists')
-
-        else:
-            # Create user
-            user = User.objects.create_user(
-                username=username,
-                password=password
-            )
-
-            # Create employee
-            employee = form.save(commit=False)
-            employee.user = user
-            employee.save()
-
-            return redirect('dashboard')
+        form.save()
+        messages.success(request, "Employee created successfully")
+        return redirect('employee_list')
 
     return render(request, 'employees/add_employee.html', {
         'form': form
     })
-    
+
+
+# ================= EMPLOYEE LIST =================
 @login_required
 @user_passes_test(is_admin)
 def employee_list(request):
@@ -131,34 +63,75 @@ def employee_list(request):
     return render(request, 'employees/employee_list.html', {
         'employees': employees
     })
-    
+
+
+# ================= UPDATE EMPLOYEE =================
 @login_required
 @user_passes_test(is_admin)
 def update_employee(request, pk):
 
-    employee = Employee.objects.get(pk=pk)
+    employee = get_object_or_404(Employee, pk=pk)
 
-    form = EmployeeForm(request.POST or None, instance=employee)
+    form = EmployeeForm(request.POST or None, request.FILES or None, instance=employee)
 
     if form.is_valid():
         form.save()
-        messages.success(request, "Employee update successfully")
+        messages.success(request, "Employee updated successfully")
         return redirect('employee_list')
 
     return render(request, 'employees/add_employee.html', {
         'form': form,
-        'is_edit': True   # 
+        'is_edit': True
     })
 
 
+# ================= DELETE EMPLOYEE =================
 @login_required
 @user_passes_test(is_admin)
 def delete_employee(request, pk):
 
-    employee = Employee.objects.get(pk=pk)
+    employee = get_object_or_404(Employee, pk=pk)
 
     # Delete linked user also
     employee.user.delete()
-    messages.success(request, "Employee Deleted Successfully")
+
+    messages.success(request, "Employee deleted successfully")
     return redirect('employee_list')
 
+#=====================Employee Dash===================
+@login_required
+def employee_dashboard(request):
+
+    employee = request.user.employee
+    tasks = TaskAssignment.objects.filter(employee=employee)
+
+    # 🔹 Filters
+    status_filter = request.GET.get('status')
+
+    if status_filter:
+        tasks = tasks.filter(status=status_filter)
+
+    # 🔹 Stats
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(status='completed').count()
+    pending_tasks = tasks.filter(status='pending').count()
+    in_progress_tasks = tasks.filter(status='in_progress').count()
+    overdue_tasks = tasks.filter(deadline__lt=timezone.now(), status__in=['pending', 'in_progress']).count()
+
+    # 🔹 Performance
+    performance, total, completed, late = calculate_performance(tasks)
+
+    # 🔹 Recent Tasks
+    recent_tasks = tasks.order_by('-assigned_date')[:10]
+
+    context = {
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'in_progress_tasks': in_progress_tasks,
+        'overdue_tasks': overdue_tasks,
+        'performance': performance,
+        'recent_tasks': recent_tasks,
+    }
+
+    return render(request, 'employees/dashboard.html', context)
