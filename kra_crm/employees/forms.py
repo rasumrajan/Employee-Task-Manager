@@ -5,7 +5,7 @@ from .models import Employee
 
 class EmployeeForm(forms.ModelForm):
 
-    # 🔹 User fields
+    #  User fields
     username = forms.CharField(
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
@@ -16,7 +16,7 @@ class EmployeeForm(forms.ModelForm):
         help_text="Leave blank to keep current password"
     )
 
-    # 🔹 Employee fields
+    #  Employee fields
     class Meta:
         model = Employee
         fields = [
@@ -41,14 +41,14 @@ class EmployeeForm(forms.ModelForm):
             'profile_image': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
-    # 🔹 Load existing data in edit mode
+    #  Load existing data in edit mode
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
             self.fields['username'].initial = self.instance.user.username
 
-    # 🔹 Validate Employee ID (handle update case)
+    #  Validate Employee ID (handle update case)
     def clean_emp_id(self):
         emp_id = self.cleaned_data.get('emp_id')
 
@@ -61,8 +61,21 @@ class EmployeeForm(forms.ModelForm):
             raise forms.ValidationError("Employee ID already exists")
 
         return emp_id
+    
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
 
-    # 🔹 Save user + employee together
+        qs = User.objects.filter(username=username)
+
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.user.pk)
+
+        if qs.exists():
+            raise forms.ValidationError("Username already exists")
+
+        return username
+
+    #  Save user + employee together
     def save(self, commit=True):
         employee = super().save(commit=False)
 

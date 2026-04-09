@@ -1,119 +1,232 @@
 {% extends 'base.html' %}
 
 {% block page_title %}My Dashboard{% endblock %}
+{% block header_title %}My Dashboard{% endblock %}
 
 {% block content %}
 
+<!-- ================= KPI ================= -->
 <div class="row">
-<!-- STATS -->
-<div class="col-md-6">
-    <div class="card">
 
-        <div class="card-header">
-            <h3 class="card-title">My Performance</h3>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Total Tasks</h6>
+                <h3>{{ total }}</h3>
+            </div>
         </div>
+    </div>
 
-        <div class="card-body">
-
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between">
-                    Total Tasks
-                    <span class="badge badge-primary">{{ total }}</span>
-                </li>
-
-                <li class="list-group-item d-flex justify-content-between">
-                    Completed
-                    <span class="badge badge-success">{{ completed }}</span>
-                </li>
-
-                <li class="list-group-item d-flex justify-content-between">
-                    Late
-                    <span class="badge badge-danger">{{ late }}</span>
-                </li>
-
-                <li class="list-group-item d-flex justify-content-between">
-                    Performance
-                    <span class="badge badge-info">{{ performance }}%</span>
-                </li>
-            </ul>
-
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Completed</h6>
+                <h3 class="text-success">{{ completed }}</h3>
+            </div>
         </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Late</h6>
+                <h3 class="text-danger">{{ late }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Performance</h6>
+                <h3 class="text-primary">{{ performance }}%</h3>
+
+                <!-- Progress Bar -->
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-info" style="width: {{ performance }}%">
+                        {{ performance }}%
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= DAILY ANALYTICS ================= -->
+<div class="row mt-3">
+
+    <div class="col-md-12">
+        <h5 class="mb-3">📊 Today's Performance</h5>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-primary shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Today's Tasks</h6>
+                <h3>{{ today_total }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-success shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Completed Today</h6>
+                <h3 class="text-success">{{ today_done }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-danger shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Late Today</h6>
+                <h3 class="text-danger">{{ today_late }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-info shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Today's Performance</h6>
+                <h3 class="text-info">{{ today_performance }}%</h3>
+
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-info" style="width: {{ today_performance }}%">
+                        {{ today_performance }}%
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= CHARTS ================= -->
+<div class="row mt-3">
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                Task Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="taskChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                Weekly Performance
+            </div>
+            <div class="card-body">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= TASK TABLE ================= -->
+<div class="card shadow-sm mt-3">
+
+    <div class="card-header bg-primary text-white">
+        My Tasks
+    </div>
+
+    <div class="card-body table-responsive">
+
+        <table class="table table-hover table-bordered">
+
+            <thead class="thead-light">
+                <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in task_data %}
+                <tr>
+
+                    <td>
+                        <strong>{{ item.task.task.title }}</strong><br>
+                        <small class="text-muted">
+                            {{ item.task.task.description|truncatewords:6 }}
+                        </small>
+                    </td>
+
+                    <td>
+                        {% if item.status == 'assigned' %}
+                            <span class="badge badge-dark">Assigned</span>
+                        {% elif item.status == 'accepted' %}
+                            <span class="badge badge-info">Accepted</span>
+                        {% elif item.status == 'in_progress' %}
+                            <span class="badge badge-primary">In Progress</span>
+                        {% elif item.status == 'paused' %}
+                            <span class="badge badge-secondary">Paused</span>
+                        {% elif item.status == 'done' %}
+                            <span class="badge badge-warning">Done</span>
+                        {% elif item.status == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% else %}
+                            <span class="badge badge-light">{{ item.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ item.deadline }}</td>
+
+                    <td>
+
+                        {% if item.status == 'assigned' %}
+                            <a href="{% url 'accept_task' item.task.id %}" class="btn btn-success btn-sm">Accept</a>
+
+                        {% elif item.status == 'accepted' %}
+                            <a href="{% url 'start_task' item.task.id %}" class="btn btn-primary btn-sm">Start</a>
+
+                        {% elif item.status == 'in_progress' %}
+                            <a href="{% url 'pause_task' item.task.id %}" class="btn btn-warning btn-sm">Pause</a>
+                            <a href="{% url 'mark_done' item.task.id %}" class="btn btn-success btn-sm">Done</a>
+
+                        {% elif item.status == 'paused' %}
+                            <a href="{% url 'start_task' item.task.id %}" class="btn btn-primary btn-sm">Resume</a>
+
+                        {% elif item.status == 'done' %}
+                            <span class="text-warning">Waiting Approval</span>
+
+                        {% elif item.status == 'completed' %}
+                            <span class="text-success">Approved</span>
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                        No tasks assigned
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
 
     </div>
-</div>
-
-<!-- PIE CHART -->
-<div class="col-md-6">
-    <div class="card">
-
-        <div class="card-header">
-            <h3 class="card-title">Task Distribution</h3>
-        </div>
-
-        <div class="card-body">
-            <canvas id="taskChart"></canvas>
-        </div>
-
-    </div>
-</div>
-</div>
-<!-- WEEKLY PERFORMANCE -->
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Weekly Performance</h3>
-    </div>
-<div class="card-body">
-    <canvas id="weeklyChart"></canvas>
-</div>
-</div>
-
-<!-- TASK LIST -->
-
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">My Tasks</h3>
-    </div>
-<div class="card-body">
-
-    <table class="table table-bordered table-hover table-striped">
-
-        <thead>
-            <tr>
-                <th>Task</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for task in tasks %}
-            <tr>
-                <td>{{ task.task.title }}</td>
-                <td>
-                    {% if task.status == 'completed' %}
-                        <span class="badge badge-success">Completed</span>
-                    {% elif task.status == 'in_progress' %}
-                        <span class="badge badge-warning">In Progress</span>
-                    {% else %}
-                        <span class="badge badge-secondary">{{ task.status }}</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="2" class="text-center text-muted">
-                    No tasks assigned
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-
-    </table>
 
 </div>
 
-</div>
-
-<!-- PIE CHART SCRIPT -->
+<!-- ================= CHART JS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
     const completed = {{ completed }};
@@ -121,20 +234,15 @@
     const pending = {{ total }} - completed;
 
     new Chart(document.getElementById('taskChart'), {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: ['Completed', 'Pending', 'Late'],
             datasets: [{
                 data: [completed, pending, late]
             }]
-        },
-        options: {
-            responsive: true
         }
     });
 </script>
-
-<!-- WEEKLY CHART SCRIPT -->
 
 <script>
     const labels = {{ labels|safe }};
@@ -147,12 +255,10 @@
             datasets: [{
                 label: 'Performance %',
                 data: data,
-                fill: false,
                 tension: 0.3
             }]
         },
         options: {
-            responsive: true,
             scales: {
                 y: {
                     min: 0,

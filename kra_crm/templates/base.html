@@ -15,38 +15,18 @@
     <style>
         body {
             background-color: #f4f6f9;
+            margin: 0;
         }
 
+        /* ================= SIDEBAR ================= */
         .sidebar {
             height: 100vh;
             background: #343a40;
             color: white;
             position: fixed;
             width: 230px;
-        }
-
-        .sidebar a {
-            color: #c2c7d0;
-            display: block;
-            padding: 12px 20px;
-            text-decoration: none;
-        }
-
-        .sidebar a:hover {
-            background: #495057;
-            color: white;
-        }
-
-        .content {
-            margin-left: 230px;
-            padding: 20px;
-        }
-
-        .topbar {
-            background: white;
-            padding: 10px 20px;
-            border-bottom: 1px solid #ddd;
-            margin-left: 230px;
+            display: flex;
+            flex-direction: column;
         }
 
         .brand {
@@ -56,6 +36,52 @@
             text-align: center;
             background: #212529;
         }
+
+        .menu {
+            flex-grow: 1;
+        }
+
+        .sidebar a {
+            color: #c2c7d0;
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #495057;
+            color: white;
+        }
+
+        /* Logout section */
+        .logout-section {
+            padding: 15px;
+            border-top: 1px solid #495057;
+        }
+
+        .logout-btn {
+            width: 100%;
+        }
+
+        /* ================= TOPBAR ================= */
+        .topbar {
+            background: white;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ddd;
+            margin-left: 230px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* ================= CONTENT ================= */
+        .content {
+            margin-left: 230px;
+            padding: 20px;
+        }
+
     </style>
 
 </head>
@@ -66,63 +92,122 @@
 <div class="sidebar">
 
     <div class="brand">
-        🚀 KRA CRM
+        🚀 OM SAI KRA CRM
     </div>
 
-    <a href="{% url 'dashboard' %}">
-        <i class="fas fa-home"></i> Dashboard
-    </a>
+    <div class="menu">
 
-    <a href="{% url 'employee_list' %}">
-        <i class="fas fa-users"></i> Employees
-    </a>
+        <!-- ================= ADMIN ================= -->
+        {% if request.user.is_superuser %}
 
-    <a href="{% url 'department_list' %}">
-        <i class="fas fa-building"></i> Departments
-    </a>
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
 
-    <a href="{% url 'kra_categories' %}">
-        <i class="fas fa-layer-group"></i> Categories
-    </a>
+            <a href="{% url 'employee_list' %}">
+                <i class="fas fa-users"></i> Employees
+            </a>
 
-    <a href="{% url 'kra_tasks' %}">
-        <i class="fas fa-tasks"></i> Task Templates
-    </a>
+            <a href="{% url 'department_list' %}">
+                <i class="fas fa-building"></i> Departments
+            </a>
 
-    <a href="{% url 'assign_task' %}">
-        <i class="fas fa-plus-circle"></i> Assign Task
-    </a>
+            <a href="{% url 'kra_categories' %}">
+                <i class="fas fa-layer-group"></i> Categories
+            </a>
 
-    <a href="{% url 'all_tasks' %}">
-        <i class="fas fa-list"></i> All Tasks
-    </a>
+            <a href="{% url 'kra_tasks' %}">
+                <i class="fas fa-tasks"></i> Task Templates
+            </a>
 
-    <a href="{% url 'logout' %}">
-        <i class="fas fa-sign-out-alt"></i> Logout
-    </a>
+            <a href="{% url 'assign_task' %}">
+                <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+
+            <a href="{% url 'all_tasks' %}">
+                <i class="fas fa-list"></i> All Tasks
+            </a>
+
+        {% endif %}
+
+
+        <!-- ================= MANAGER ================= -->
+        {% if not request.user.is_superuser and request.user.employee.role == "manager" %}
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+
+            <a href="{% url 'manager_dashboard' %}">
+                <i class="fas fa-users-cog"></i> Team Dashboard
+            </a>
+
+            <a href="{% url 'assign_task' %}">
+                <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+
+            <a href="{% url 'all_tasks' %}">
+                <i class="fas fa-tasks"></i> Team Tasks
+            </a>
+
+        {% endif %}
+
+
+        <!-- ================= EMPLOYEE ================= -->
+        {% if not request.user.is_superuser and request.user.employee.role == "employee" %}
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-home"></i> My Dashboard
+            </a>
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-tasks"></i> My Tasks
+            </a>
+
+        {% endif %}
+
+    </div>
+
+    <!-- ================= LOGOUT ================= -->
+    <div class="logout-section">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-danger logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </form>
+    </div>
 
 </div>
 
 <!-- ================= TOPBAR ================= -->
-<div class="topbar d-flex justify-content-between align-items-center">
+<div class="topbar">
 
-    <!-- 🔥 FIXED: separate block -->
     <h5 class="mb-0">
         {% block header_title %}Dashboard{% endblock %}
     </h5>
 
-    <div>
-        Logged in as <strong>{{ request.user.username }}</strong>
+    <div class="d-flex align-items-center">
+
+        <span class="mr-3">
+            Logged in as <strong>{{ request.user.username }}</strong>
+        </span>
+
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </form>
+
     </div>
 
 </div>
 
 <!-- ================= CONTENT ================= -->
 <div class="content">
-
     {% block content %}
     {% endblock %}
-
 </div>
 
 <!-- JS -->

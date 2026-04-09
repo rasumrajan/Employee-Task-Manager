@@ -10,30 +10,52 @@ from django.contrib.auth.models import User
 class TaskAssignment(models.Model):
 
     STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("in_progress", "In Progress"),
-        ("paused", "Paused"),
-        ("done", "Done (Waiting Approval)"),
-        ("completed", "Completed"),
+        ('assigned', 'Assigned'),
+        ('accepted', 'Accepted'),
+        ('in_progress', 'In Progress'),
+        ('paused', 'Paused'),
+        ('done', 'Done (Waiting Approval)'),
+        ('completed', 'Completed'),
     ]
 
     PRIORITY_CHOICES = [
-        ("high", "High"),
-        ("medium", "Medium"),
-        ("low", "Low"),
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
     ]
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="tasks")
-    task = models.ForeignKey(KRATask, on_delete=models.CASCADE)
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="tasks"
+    )
 
-    assigned_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    task = models.ForeignKey(
+        KRATask,
+        on_delete=models.CASCADE
+    )
+
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
     assigned_date = models.DateTimeField(auto_now_add=True)
 
     deadline = models.DateTimeField()
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    # 🔥 DEFAULT SHOULD BE 'assigned'
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='assigned'
+    )
 
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="medium")
+    priority = models.CharField(
+        max_length=20,
+        choices=PRIORITY_CHOICES,
+        default='medium'
+    )
 
     progress = models.IntegerField(default=0)
     remarks = models.TextField(blank=True, null=True)
@@ -41,46 +63,68 @@ class TaskAssignment(models.Model):
     start_time = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
-    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='approved_tasks')
+    approved_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='approved_tasks'
+    )
+
     approved_at = models.DateTimeField(null=True, blank=True)
 
     # ================= SAVE LOGIC =================
     def save(self, *args, **kwargs):
 
-        if self.status == 'pending':
+        # 🔥 STATUS BASED PROGRESS CONTROL
+        if self.status == 'assigned':
             self.progress = 0
 
+        elif self.status == 'accepted':
+            self.progress = 5
+
         elif self.status == 'in_progress':
-            if self.progress == 0:
+            if not self.start_time:
+                self.start_time = timezone.now()
+
+            if self.progress < 10:
                 self.progress = 10
+
+        elif self.status == 'paused':
+            pass  # keep same progress
 
         elif self.status == 'done':
             self.progress = 90
 
         elif self.status == 'completed':
             self.progress = 100
+
             if not self.completed_at:
                 self.completed_at = timezone.now()
 
+            if not self.approved_at:
+                self.approved_at = timezone.now()
+
         super().save(*args, **kwargs)
 
-    # ================= CALCULATIONS =================
-
+    # ================= TIME CALCULATION =================
     def total_duration(self):
         logs = self.time_logs.all()
         total = timedelta()
 
         for log in logs:
             if log.end_time:
-                total += log.end_time - log.start_time
+                total += (log.end_time - log.start_time)
 
         return total
 
+    # ================= LATE CHECK =================
     def is_late(self):
-        if self.completed_at:
+        if self.completed_at and self.deadline:
             return self.completed_at > self.deadline
         return False
 
+    # ================= DELAY =================
     def delay(self):
         if self.completed_at and self.deadline:
             diff = self.completed_at - self.deadline
@@ -91,21 +135,35 @@ class TaskAssignment(models.Model):
 
         return "On Time"
 
+    # ================= PERFORMANCE =================
     def performance_score(self):
         if self.status != 'completed':
             return 0
 
-        if self.is_late():
-            return 70
-        return 100
+        return 70 if self.is_late() else 100
+
+    # ================= OVERDUE (FIXED) =================
+    @property
+    def is_overdue(self):
+        return (
+            self.deadline and
+            self.status not in ['completed'] and
+            self.deadline < timezone.now()
+        )
 
     def __str__(self):
         return f"{self.employee.user.username} - {self.task.title}"
 
 
+# ================= TIME LOG =================
 class TaskTimeLog(models.Model):
 
-    employee_task = models.ForeignKey(TaskAssignment, on_delete=models.CASCADE, related_name="time_logs")
+    employee_task = models.ForeignKey(
+        TaskAssignment,
+        on_delete=models.CASCADE,
+        related_name="time_logs"
+    )
+
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
 
@@ -113,3 +171,6 @@ class TaskTimeLog(models.Model):
         if self.end_time:
             return self.end_time - self.start_time
         return None
+
+    def __str__(self):
+        return f"{self.employee_task} | {self.start_time}"

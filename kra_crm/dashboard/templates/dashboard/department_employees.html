@@ -1,203 +1,127 @@
 {% extends 'base.html' %}
 
-{% block page_title %}My Dashboard{% endblock %}
+{% block page_title %}{{ department.name }} Dashboard{% endblock %}
 
 {% block content %}
 
-<div class="row">
+<div class="container-fluid">
 
-<!-- ================= STATS ================= -->
-<div class="col-md-6">
-    <div class="card">
+    <!-- ================= HEADER ================= -->
+    <div class="mb-3">
+        <h2>{{ department.name }} Department</h2>
+        <p class="text-muted">Overview of team performance and tasks</p>
+    </div>
+
+    <!-- ================= KPI CARDS ================= -->
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h4>{{ total_tasks }}</h4>
+                    <p>Total Tasks</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h4>{{ completed_tasks }}</h4>
+                    <p>Completed</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h4>{{ pending_tasks }}</h4>
+                    <p>Pending</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h4>{{ late_tasks }}</h4>
+                    <p>Late</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= PERFORMANCE BAR ================= -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5>Overall Performance</h5>
+            <div class="progress">
+                <div class="progress-bar bg-info"
+                     style="width: {{ performance }}%">
+                    {{ performance }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EMPLOYEE TABLE ================= -->
+    <div class="card mt-4">
 
         <div class="card-header">
-            <h3 class="card-title">My Performance</h3>
+            <h4>Employees Performance</h4>
         </div>
 
         <div class="card-body">
 
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between">
-                    Total Tasks
-                    <span class="badge badge-primary">{{ total }}</span>
-                </li>
+            <table class="table table-bordered table-hover">
 
-                <li class="list-group-item d-flex justify-content-between">
-                    Completed
-                    <span class="badge badge-success">{{ completed }}</span>
-                </li>
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Employee</th>
+                        <th>Total Tasks</th>
+                        <th>Completed</th>
+                        <th>Late</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
 
-                <li class="list-group-item d-flex justify-content-between">
-                    Late
-                    <span class="badge badge-danger">{{ late }}</span>
-                </li>
+                <tbody>
+                    {% for d in data %}
+                    <tr>
+                        <td>{{ d.employee.user.username }}</td>
+                        <td>{{ d.total }}</td>
+                        <td>{{ d.completed }}</td>
+                        <td>{{ d.late }}</td>
 
-                <li class="list-group-item d-flex justify-content-between">
-                    Performance
-                    <span class="badge badge-info">{{ performance }}%</span>
-                </li>
-            </ul>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar 
+                                    {% if d.performance >= 80 %}bg-success
+                                    {% elif d.performance >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    style="width: {{ d.performance }}%">
+                                    {{ d.performance }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            No employees or tasks found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
 
         </div>
-
     </div>
-</div>
-
-<!-- ================= PIE CHART ================= -->
-<div class="col-md-6">
-    <div class="card">
-
-        <div class="card-header">
-            <h3 class="card-title">Task Distribution</h3>
-        </div>
-
-        <div class="card-body">
-            <canvas id="taskChart"></canvas>
-        </div>
-
-    </div>
-</div>
 
 </div>
-
-<!-- ================= WEEKLY PERFORMANCE ================= -->
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Weekly Performance</h3>
-    </div>
-
-    <div class="card-body">
-        <canvas id="weeklyChart"></canvas>
-    </div>
-</div>
-
-<!-- ================= TASK TABLE (UPDATED) ================= -->
-<div class="card mt-4">
-    <div class="card-header">
-        <h3 class="card-title">My Tasks</h3>
-    </div>
-
-    <div class="card-body">
-
-        <table class="table table-bordered table-hover table-striped">
-
-            <thead>
-                <tr>
-                    <th>Task</th>
-                    <th>Status</th>
-                    <th>Assigned On</th>
-                    <th>Pending Days</th>
-                    <th>Deadline</th>
-                    <th>On Time</th>
-                    <th>Performance</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for t in task_data %}
-                <tr>
-                    <td>{{ t.task.title }}</td>
-
-                    <td>
-                        {% if t.status|lower == 'completed' %}
-                            <span class="badge badge-success">Completed</span>
-                        {% elif t.status|lower == 'pending' %}
-                            <span class="badge badge-warning">Pending</span>
-                        {% else %}
-                            <span class="badge badge-secondary">{{ t.status }}</span>
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        {% if t.assigned_on %}
-                            {{ t.assigned_on|date:"d M Y" }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-
-                    <td>{{ t.pending_days }}</td>
-
-                    <td>{{ t.deadline|date:"d M Y" }}</td>
-
-                    <td>
-                        {% if t.on_time == "Yes" %}
-                            <span class="badge badge-success">Yes</span>
-                        {% else %}
-                            <span class="badge badge-danger">No</span>
-                        {% endif %}
-                    </td>
-
-                    <td>{{ t.performance }}%</td>
-
-                    <td>
-                        <span class="badge badge-info">
-                            {{ t.score }}
-                        </span>
-                    </td>
-                </tr>
-
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="text-center text-muted">
-                        No tasks assigned
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-
-        </table>
-
-    </div>
-</div>
-
-<!-- ================= PIE CHART SCRIPT ================= -->
-<script>
-    const completed = {{ completed }};
-    const late = {{ late }};
-    const pending = {{ total }} - completed;
-
-    new Chart(document.getElementById('taskChart'), {
-        type: 'pie',
-        data: {
-            labels: ['Completed', 'Pending', 'Late'],
-            datasets: [{
-                data: [completed, pending, late]
-            }]
-        },
-        options: {
-            responsive: true
-        }
-    });
-</script>
-
-<!-- ================= WEEKLY CHART SCRIPT ================= -->
-<script>
-    const labels = {{ labels|safe }};
-    const data = {{ daily_performance|safe }};
-
-    new Chart(document.getElementById('weeklyChart'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Performance %',
-                data: data,
-                fill: false,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    min: 0,
-                    max: 100
-                }
-            }
-        }
-    });
-</script>
 
 {% endblock %}

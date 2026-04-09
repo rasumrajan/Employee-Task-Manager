@@ -1,10 +1,14 @@
-from django.shortcuts import get_object_or_404, render
+import json
+from urllib import request
+
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
+from django.utils import timezone
+from datetime import date, timedelta
+
 from employees.models import Employee, Department
 from tasks.models import TaskAssignment
-from datetime import date, timedelta
-from django.utils import timezone
 
 
 # ================= PERFORMANCE FUNCTION =================
@@ -39,10 +43,19 @@ def dashboard(request):
 
         data = []
 
+        # ================= EMPLOYEE PERFORMANCE =================
         for emp in employees:
-            tasks = all_tasks.filter(employee=emp)
+            emp_tasks = all_tasks.filter(employee=emp)
 
-            performance, total, completed, late = calculate_performance(tasks)
+            total = emp_tasks.count()
+            completed = emp_tasks.filter(status__iexact='completed').count()
+
+            late = emp_tasks.filter(
+                status__iexact='completed',
+                completed_at__gt=F('deadline')
+            ).count()
+
+            performance = int(((completed - late) / total) * 100) if total > 0 else 0
 
             data.append({
                 'employee': emp,
@@ -52,151 +65,190 @@ def dashboard(request):
                 'performance': performance
             })
 
+        # ================= RANKING =================
+        data.sort(key=lambda x: x['performance'], reverse=True)
+
+        for i, item in enumerate(data):
+            if i == 0:
+                item['medal'] = "🥇"
+            elif i == 1:
+                item['medal'] = "🥈"
+            elif i == 2:
+                item['medal'] = "🥉"
+            else:
+                item['medal'] = str(i + 1)
+
+        top_performer = data[0] if data else None
+
         # ================= KPI =================
         total_tasks = all_tasks.count()
 
         completed_tasks = all_tasks.filter(status__iexact='completed').count()
-        pending_tasks = all_tasks.filter(status__iexact='pending').count()
+
+        pending_tasks = all_tasks.filter(
+            status__in=['assigned', 'accepted', 'in_progress', 'paused']
+        ).count()
 
         late_tasks = all_tasks.filter(
             status__iexact='completed',
             completed_at__gt=F('deadline')
         ).count()
 
-        overall_performance = int(((completed_tasks - late_tasks) / total_tasks) * 100) if total_tasks > 0 else 0
+        performance = int(((completed_tasks - late_tasks) / total_tasks) * 100) if total_tasks > 0 else 0
 
-        # ================= WEEKLY =================
-        today = timezone.now().date()
+        # ================= EMPLOYEE CHART =================
+        employee_labels = [d['employee'].user.username for d in data]
+        employee_performance = [d['performance'] for d in data]
 
-        chart_labels = []
-        employee_chart_data = []
-
-        for i in range(6, -1, -1):
-            day = today - timedelta(days=i)
-            chart_labels.append(day.strftime("%d %b"))
-
-        for emp in employees:
-            emp_tasks = all_tasks.filter(employee=emp)
-            emp_data = []
-
-            for i in range(6, -1, -1):
-                day = today - timedelta(days=i)
-
-                day_tasks = emp_tasks.filter(
-                    completed_at__date=day,
-                    status__iexact='completed'
-                )
-
-                total_day = day_tasks.count()
-                late_day = day_tasks.filter(completed_at__gt=F('deadline')).count()
-
-                performance_day = int(((total_day - late_day) / total_day) * 100) if total_day > 0 else 0
-
-                emp_data.append(performance_day)
-
-            employee_chart_data.append({
-                'name': emp.user.username,
-                'data': emp_data
-            })
-
-        # ================= DEPARTMENT GRAPH =================
-        dept_chart = []
+        # ================= DEPARTMENT CHART =================
+        dept_labels = []
+        dept_completed = []
+        dept_pending = []
+        dept_late = []
 
         for dept in Department.objects.all():
             dept_tasks = all_tasks.filter(employee__department=dept)
 
-            completed = dept_tasks.filter(status__iexact='completed').count()
-            pending = dept_tasks.filter(status__iexact='pending').count()
+            dept_labels.append(dept.name)
 
-            late = dept_tasks.filter(
-                status__iexact='completed',
-                completed_at__gt=F('deadline')
-            ).count()
+            dept_completed.append(
+                dept_tasks.filter(status__iexact='completed').count()
+            )
 
-            dept_chart.append({
-                "id": dept.id,
-                "name": dept.name,
-                "completed": completed,
-                "pending": pending,
-                "late": late
-            })
+            dept_pending.append(
+                dept_tasks.filter(
+                    status__in=['assigned', 'accepted', 'in_progress', 'paused']
+                ).count()
+            )
+
+            dept_late.append(
+                dept_tasks.filter(
+                    status__iexact='completed',
+                    completed_at__gt=F('deadline')
+                ).count()
+            )
 
         return render(request, 'dashboard/admin_dashboard.html', {
             'data': data,
-            'chart_labels': chart_labels,
-            'employee_chart_data': employee_chart_data,
+            'top_performer': top_performer,
 
+            # KPI
             'total_tasks': total_tasks,
             'completed_tasks': completed_tasks,
             'pending_tasks': pending_tasks,
             'late_tasks': late_tasks,
-            'performance': overall_performance,
+            'performance': performance,
 
-            'dept_chart': dept_chart,
+            # Charts (FIXED JSON)
+            'employee_labels': json.dumps(employee_labels),
+            'employee_performance': json.dumps(employee_performance),
+
+            'dept_labels': json.dumps(dept_labels),
+            'dept_completed': json.dumps(dept_completed),
+            'dept_pending': json.dumps(dept_pending),
+            'dept_late': json.dumps(dept_late),
+
+            # Departments clickable
+            'departments': Department.objects.all(),
         })
 
+    # ================= ROLE BASE =================
+    try:
+        employee = request.user.employee
+    except Employee.DoesNotExist:
+        return redirect('login')
+
+    # ================= MANAGER =================
+    if employee.role == "manager":
+
+        department = employee.department
+
+        employees = Employee.objects.filter(department=department).select_related('user')
+        tasks = TaskAssignment.objects.filter(employee__department=department)
+
+        total_tasks = tasks.count()
+        completed_tasks = tasks.filter(status__iexact='completed').count()
+
+        pending_tasks = tasks.filter(
+            status__in=['assigned', 'accepted', 'in_progress', 'paused']
+        ).count()
+
+        late_tasks = tasks.filter(
+            status__iexact='completed',
+            completed_at__gt=F('deadline')
+        ).count()
+
+        performance = int(((completed_tasks - late_tasks) / total_tasks) * 100) if total_tasks > 0 else 0
+
+        data = []
+
+        for emp in employees:
+            emp_tasks = tasks.filter(employee=emp)
+
+            total = emp_tasks.count()
+            completed = emp_tasks.filter(status__iexact='completed').count()
+
+            late = emp_tasks.filter(
+                status__iexact='completed',
+                completed_at__gt=F('deadline')
+            ).count()
+
+            emp_performance = int(((completed - late) / total) * 100) if total > 0 else 0
+
+            data.append({
+                'employee': emp,
+                'total': total,
+                'completed': completed,
+                'late': late,
+                'performance': emp_performance
+            })
+
+        #  FIXED (OUTSIDE LOOP)
+        data.sort(key=lambda x: x['performance'], reverse=True)
+
+        for i, item in enumerate(data):
+            if i == 0:
+                item['medal'] = "🥇"
+            elif i == 1:
+                item['medal'] = "🥈"
+            elif i == 2:
+                item['medal'] = "🥉"
+            else:
+                item['medal'] = str(i + 1)
+
+        return render(request, 'employees/manager_dashboard.html', {
+            'department': department,
+            'data': data,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'pending_tasks': pending_tasks,
+            'late_tasks': late_tasks,
+            'performance': performance,
+        })
 
     # ================= EMPLOYEE =================
     else:
 
-        try:
-            employee = Employee.objects.get(user=request.user)
-        except Employee.DoesNotExist:
-            return render(request, 'dashboard/employee_dashboard.html', {
-                'task_data': [],
-                'total': 0,
-                'completed': 0,
-                'late': 0,
-                'performance': 0,
-                'labels': [],
-                'daily_performance': []
-            })
-
-        # ✅ IMPORTANT FIX (ONLY EMPLOYEE TASKS)
         tasks = TaskAssignment.objects.filter(employee=employee)
 
         performance, total, completed, late = calculate_performance(tasks)
 
-        # ================= TASK DETAILS =================
-        task_data = []
-
-        for task in tasks:
-
-            status = task.status
-            assigned_on = task.assigned_at if task.assigned_at else None
-            deadline = task.deadline
-
-            # Pending Days
-            if assigned_on and status.lower() != 'completed':
-                pending_days = (date.today() - assigned_on.date()).days
-            else:
-                pending_days = 0
-
-            # On Time
-            if task.completed_at and deadline:
-                on_time = task.completed_at <= deadline
-            else:
-                on_time = False
-
-            # Performance
-            if status.lower() == 'completed':
-                task_performance = 100 if on_time else 50
-            else:
-                task_performance = 0
-
-            task_data.append({
-                "task": task,
-                "status": status,
-                "assigned_on": assigned_on,
-                "deadline": deadline,
-                "pending_days": pending_days,
-                "on_time": "Yes" if on_time else "No",
-                "performance": task_performance,
-                "score": task_performance
-            })
-
-        # ================= WEEKLY =================
         today = timezone.now().date()
+
+        today_tasks = tasks.filter(assigned_date__date=today)
+        today_completed = tasks.filter(
+            status__iexact='completed',
+            completed_at__date=today
+        )
+
+        today_total = today_tasks.count()
+        today_done = today_completed.count()
+
+        today_late = today_completed.filter(
+            completed_at__gt=F('deadline')
+        ).count()
+
+        today_performance = int(((today_done - today_late) / today_done) * 100) if today_done > 0 else 0
 
         labels = []
         daily_performance = []
@@ -218,28 +270,55 @@ def dashboard(request):
             daily_performance.append(performance_day)
 
         return render(request, 'dashboard/employee_dashboard.html', {
-            'task_data': task_data,
             'total': total,
             'completed': completed,
             'late': late,
             'performance': performance,
-            'labels': labels,
-            'daily_performance': daily_performance,
+
+            'labels': json.dumps(labels),
+            'daily_performance': json.dumps(daily_performance),
+
+            'today_total': today_total,
+            'today_done': today_done,
+            'today_late': today_late,
+            'today_performance': today_performance,
         })
-
-
 # ================= DEPARTMENT VIEW =================
 @login_required
 def department_employees(request, dept_id):
 
     department = get_object_or_404(Department, id=dept_id)
 
-    employees = Employee.objects.filter(department=department).select_related('user')
+    #  All tasks of this department
+    dept_tasks = TaskAssignment.objects.filter(
+        employee__department=department
+    ).select_related('employee__user')
 
+    employees = Employee.objects.filter(
+        department=department
+    ).select_related('user')
+
+    # ================= KPI =================
+    total_tasks = dept_tasks.count()
+
+    completed_tasks = dept_tasks.filter(status__iexact='completed').count()
+
+    pending_tasks = dept_tasks.filter(
+        status__in=['assigned', 'accepted', 'in_progress', 'paused']
+    ).count()
+
+    late_tasks = dept_tasks.filter(
+        status__iexact='completed',
+        completed_at__gt=F('deadline')
+    ).count()
+
+    performance = int(((completed_tasks - late_tasks) / total_tasks) * 100) if total_tasks > 0 else 0
+
+    # ================= EMPLOYEE DATA =================
     data = []
 
     for emp in employees:
-        tasks = TaskAssignment.objects.filter(employee=emp)
+        tasks = dept_tasks.filter(employee=emp)
 
         total = tasks.count()
         completed = tasks.filter(status__iexact='completed').count()
@@ -249,17 +328,24 @@ def department_employees(request, dept_id):
             completed_at__gt=F('deadline')
         ).count()
 
-        performance = int(((completed - late) / total) * 100) if total > 0 else 0
+        emp_performance = int(((completed - late) / total) * 100) if total > 0 else 0
 
         data.append({
             'employee': emp,
             'total': total,
             'completed': completed,
             'late': late,
-            'performance': performance
+            'performance': emp_performance
         })
 
     return render(request, 'dashboard/department_employees.html', {
         'department': department,
-        'data': data
+        'data': data,
+
+        # KPI
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'late_tasks': late_tasks,
+        'performance': performance,
     })

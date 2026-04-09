@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h3>My Tasks</h3>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Task</th>
+        <th>Status</th>
+    </tr>
+
+    {% for task in tasks %}
+    <tr>
+        <td>{{ task.task.title }}</td>
+        <td>{{ task.status }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
