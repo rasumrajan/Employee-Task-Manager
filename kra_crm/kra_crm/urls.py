@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf.urls.static import static
 from kra_crm import settings
-
+from django.shortcuts import redirect
 # Set the site header to an empty string to remove the text
 admin.site.site_header = "OM SAI KRA" 
 # Set other titles to empty strings if needed
@@ -26,6 +26,8 @@ admin.site.site_title = "OM SAI"
 admin.site.index_title = "KRA"
 
 urlpatterns = [
+    
+    path('', lambda request: redirect('login')),
     path('admin/', admin.site.urls),
     path('', include('accounts.urls')),
     path('employees/', include('employees.urls')),
