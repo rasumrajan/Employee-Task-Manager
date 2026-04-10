@@ -12,4 +12,6 @@ urlpatterns = [
     path('pause/<int:task_id>/', views.pause_task, name='pause_task'),
     path('done/<int:task_id>/', views.mark_done, name='mark_done'),
     path('approve/<int:task_id>/', views.approve_task, name='approve_task'),
+    path('reject-task/<int:task_id>/', views.reject_task, name='reject_task'),
+    path('resubmit-task/<int:task_id>/', views.resubmit_task, name='resubmit_task'),
 ]

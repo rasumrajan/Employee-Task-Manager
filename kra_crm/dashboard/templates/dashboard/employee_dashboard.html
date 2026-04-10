@@ -4,10 +4,9 @@
 {% block header_title %}My Dashboard{% endblock %}
 
 {% block content %}
-
+<h1>This is</h1>
 <!-- ================= KPI ================= -->
 <div class="row">
-
     <div class="col-md-3">
         <div class="card shadow-sm text-center">
             <div class="card-body">
@@ -154,70 +153,159 @@
             </thead>
 
             <tbody>
-                {% for item in task_data %}
-                <tr>
+    {% for item in task_data %}
+    <tr>
 
-                    <td>
-                        <strong>{{ item.task.task.title }}</strong><br>
-                        <small class="text-muted">
-                            {{ item.task.task.description|truncatewords:6 }}
-                        </small>
-                    </td>
+        <!-- TASK -->
+        <td>
+            <strong>{{ item.task.title }}</strong><br>
+            <small class="text-muted">
+                {{ item.task.description|truncatewords:6 }}
+            </small>
+        </td>
 
-                    <td>
-                        {% if item.status == 'assigned' %}
-                            <span class="badge badge-dark">Assigned</span>
-                        {% elif item.status == 'accepted' %}
-                            <span class="badge badge-info">Accepted</span>
-                        {% elif item.status == 'in_progress' %}
-                            <span class="badge badge-primary">In Progress</span>
-                        {% elif item.status == 'paused' %}
-                            <span class="badge badge-secondary">Paused</span>
-                        {% elif item.status == 'done' %}
-                            <span class="badge badge-warning">Done</span>
-                        {% elif item.status == 'completed' %}
-                            <span class="badge badge-success">Completed</span>
-                        {% else %}
-                            <span class="badge badge-light">{{ item.status }}</span>
-                        {% endif %}
-                    </td>
+        <!-- STATUS -->
+        <td>
+            {% if item.status == 'assigned' %}
+                <span class="badge badge-dark">Assigned</span>
 
-                    <td>{{ item.deadline }}</td>
+            {% elif item.status == 'accepted' %}
+                <span class="badge badge-info">Accepted</span>
 
-                    <td>
+            {% elif item.status == 'in_progress' %}
+                <span class="badge badge-primary">In Progress</span>
 
-                        {% if item.status == 'assigned' %}
-                            <a href="{% url 'accept_task' item.task.id %}" class="btn btn-success btn-sm">Accept</a>
+            {% elif item.status == 'paused' %}
+                <span class="badge badge-secondary">Paused</span>
 
-                        {% elif item.status == 'accepted' %}
-                            <a href="{% url 'start_task' item.task.id %}" class="btn btn-primary btn-sm">Start</a>
+            {% elif item.status == 'done' %}
+                <span class="badge badge-warning">Waiting Approval</span>
 
-                        {% elif item.status == 'in_progress' %}
-                            <a href="{% url 'pause_task' item.task.id %}" class="btn btn-warning btn-sm">Pause</a>
-                            <a href="{% url 'mark_done' item.task.id %}" class="btn btn-success btn-sm">Done</a>
+            {% elif item.status == 'completed' %}
+                <span class="badge badge-success">Approved</span>
 
-                        {% elif item.status == 'paused' %}
-                            <a href="{% url 'start_task' item.task.id %}" class="btn btn-primary btn-sm">Resume</a>
+            {% elif item.status == 'rejected' %}
+                <span class="badge badge-danger">Rejected</span>
 
-                        {% elif item.status == 'done' %}
-                            <span class="text-warning">Waiting Approval</span>
+            {% else %}
+                <span class="badge badge-light">{{ item.status }}</span>
+            {% endif %}
+        </td>
 
-                        {% elif item.status == 'completed' %}
-                            <span class="text-success">Approved</span>
-                        {% endif %}
+        <!-- DEADLINE -->
+        <td>
+            {{ item.deadline|date:"d M Y, h:i A" }}
+        </td>
 
-                    </td>
+        <!-- ACTIONS -->
+        <td>
 
-                </tr>
+            {% if item.status == 'assigned' %}
+                <a href="{% url 'accept_task' item.id %}" 
+                   class="btn btn-success btn-sm">
+                    ✔ Accept
+                </a>
 
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center text-muted py-4">
-                        No tasks assigned
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            {% elif item.status == 'accepted' %}
+                <a href="{% url 'start_task' item.id %}" 
+                   class="btn btn-primary btn-sm">
+                    ▶ Start
+                </a>
+
+            {% elif item.status == 'in_progress' %}
+                <a href="{% url 'pause_task' item.id %}" 
+                   class="btn btn-warning btn-sm">
+                    ⏸ Pause
+                </a>
+
+                <a href="{% url 'mark_done' item.id %}" 
+                   class="btn btn-success btn-sm">
+                    ✔ Done
+                </a>
+
+            {% elif item.status == 'paused' %}
+                <a href="{% url 'start_task' item.id %}" 
+                   class="btn btn-primary btn-sm">
+                    ▶ Resume
+                </a>
+
+            {% elif item.status == 'done' %}
+                <span class="badge badge-warning">
+                    ⏳ Waiting Approval
+                </span>
+
+            {% elif item.status == 'completed' %}
+                <span class="badge badge-success">
+                    ✔ Approved
+                </span>
+
+            {% elif item.status == 'rejected' %}
+
+                <div class="d-flex flex-column gap-1">
+
+                    <!-- BADGE -->
+                    <span class="badge badge-danger">
+                        ❌ Rejected
+                    </span>
+
+                    <!-- VIEW REASON -->
+                    <button class="btn btn-outline-danger btn-sm"
+                            data-toggle="modal"
+                            data-target="#reasonModal{{ item.id }}">
+                        👁 View Reason
+                    </button>
+
+                    <!-- RESUBMIT -->
+                    <a href="{% url 'resubmit_task' item.id %}" 
+                       class="btn btn-warning btn-sm">
+                        🔄 Resubmit
+                    </a>
+
+                </div>
+
+                <!-- MODAL -->
+                <div class="modal fade" id="reasonModal{{ item.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">Rejection Reason</h5>
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            </div>
+
+                            <div class="modal-body">
+                                <p style="white-space: pre-line;">
+                                    {{ item.rejection_reason }}
+                                </p>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-dismiss="modal">
+                                    Close
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <span class="text-muted">--</span>
+            {% endif %}
+
+        </td>
+
+    </tr>
+
+    {% empty %}
+    <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+            <i class="fas fa-tasks fa-2x mb-2"></i><br>
+            No tasks assigned
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
 
         </table>
 

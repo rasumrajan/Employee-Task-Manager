@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from .models import TaskAssignment
 from kra.models import KRATask
 from employees.models import Employee
@@ -18,7 +19,7 @@ class TaskAssignForm(forms.ModelForm):
 
             'task': forms.Select(attrs={
                 'class': 'form-control',
-                'id': 'id_task'   # 🔥 IMPORTANT for JS
+                'id': 'id_task'
             }),
 
             'deadline': forms.DateTimeInput(attrs={
@@ -41,24 +42,20 @@ class TaskAssignForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #  Ensure dropdown loads properly
-        self.fields['task'].queryset = KRATask.objects.select_related('category').all()
+        # Optimized queryset
+        self.fields['task'].queryset = KRATask.objects.select_related('category')
+        self.fields['employee'].queryset = Employee.objects.select_related('user')
 
-        self.fields['employee'].queryset = Employee.objects.select_related('user').all()
-
-        #  UX improvements
+        # UX labels
         self.fields['task'].empty_label = "Select Task"
         self.fields['employee'].empty_label = "Select Employee"
 
-    #  OPTIONAL VALIDATION (SAFE)
+    # ================= VALIDATION =================
     def clean_deadline(self):
         deadline = self.cleaned_data.get('deadline')
 
-        if deadline:
-            from django.utils import timezone
-
-            if deadline < timezone.now():
-                raise forms.ValidationError("Deadline cannot be in the past")
+        if deadline and deadline < timezone.now():
+            raise forms.ValidationError("Deadline cannot be in the past")
 
         return deadline
 
@@ -93,4 +90,12 @@ class TaskUpdateForm(forms.ModelForm):
             'progress': 'Progress (%)',
             'remarks': 'Remarks',
         }
-        
+
+    #  EXTRA VALIDATION (PRO LEVEL)
+    def clean_progress(self):
+        progress = self.cleaned_data.get('progress')
+
+        if progress < 0 or progress > 100:
+            raise forms.ValidationError("Progress must be between 0 and 100")
+
+        return progress

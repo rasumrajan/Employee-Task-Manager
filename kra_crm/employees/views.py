@@ -126,11 +126,13 @@ def employee_dashboard(request):
         })
 
     # ================= TASK QUERY =================
-    tasks = TaskAssignment.objects.filter(employee=employee)
+    tasks = TaskAssignment.objects.filter(employee=employee).select_related('task')
 
-    # FILTER (optional)
+    # ================= FILTER =================
     status_filter = request.GET.get('status')
-    if status_filter:
+
+    # SAFE FILTER (FIX BUG)
+    if status_filter and status_filter not in ["", "None", "all"]:
         tasks = tasks.filter(status=status_filter)
 
     # ================= BASIC STATS =================
@@ -139,7 +141,7 @@ def employee_dashboard(request):
     completed_tasks = tasks.filter(status__iexact='completed').count()
 
     pending_tasks = tasks.filter(
-        status__in=['assigned', 'accepted', 'pending']
+        status__in=['assigned', 'accepted']
     ).count()
 
     in_progress_tasks = tasks.filter(
@@ -152,7 +154,15 @@ def employee_dashboard(request):
     ).count()
 
     # ================= PERFORMANCE =================
-    performance, total, completed, late = calculate_performance(tasks)
+    if total_tasks > 0:
+        late_tasks = tasks.filter(
+            status='completed',
+            completed_at__gt=F('deadline')
+        ).count()
+
+        performance = int(((completed_tasks - late_tasks) / total_tasks) * 100)
+    else:
+        performance = 0
 
     # ================= RECENT TASKS =================
     recent_tasks = tasks.order_by('-assigned_date')[:10]
@@ -208,14 +218,17 @@ def employee_dashboard(request):
         # PERFORMANCE
         'performance': performance,
 
-        # TASKS
+        # TASKS ( MAIN FIX )
+        'task_data': tasks,
+
+        # OPTIONAL (if used elsewhere)
         'recent_tasks': recent_tasks,
 
         # MAIN CHART
         'chart_labels': chart_labels,
         'chart_data': chart_data,
 
-        #  DAILY ANALYTICS
+        # DAILY ANALYTICS
         'today_tasks': today_tasks,
         'today_completed': today_completed,
         'today_pending': today_pending,
@@ -289,7 +302,7 @@ def manager_dashboard(request):
             'performance': emp_performance
         })
 
-    # ================= 🔥 FINAL RANK + MEDAL =================
+    # =================  FINAL RANK + MEDAL =================
 
     # SORT BY PERFORMANCE
     data.sort(key=lambda x: x['performance'], reverse=True)
@@ -306,7 +319,7 @@ def manager_dashboard(request):
         else:
             item['medal'] = str(i + 1)
 
-    # 🏆 TOP PERFORMER
+    #  TOP PERFORMER
     top_performer = data[0] if data else None
 
     

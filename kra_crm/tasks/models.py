@@ -16,6 +16,7 @@ class TaskAssignment(models.Model):
         ('paused', 'Paused'),
         ('done', 'Done (Waiting Approval)'),
         ('completed', 'Completed'),
+        ('rejected', 'Rejected'),
     ]
 
     PRIORITY_CHOICES = [
@@ -39,12 +40,13 @@ class TaskAssignment(models.Model):
         User,
         on_delete=models.CASCADE
     )
-
+    rejection_reason = models.TextField(null=True, blank=True)
+    is_resubmitted = models.BooleanField(default=False)
     assigned_date = models.DateTimeField(auto_now_add=True)
 
     deadline = models.DateTimeField()
 
-    # 🔥 DEFAULT SHOULD BE 'assigned'
+    #  DEFAULT SHOULD BE 'assigned'
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -76,7 +78,7 @@ class TaskAssignment(models.Model):
     # ================= SAVE LOGIC =================
     def save(self, *args, **kwargs):
 
-        # 🔥 STATUS BASED PROGRESS CONTROL
+        #  STATUS BASED PROGRESS CONTROL
         if self.status == 'assigned':
             self.progress = 0
 
@@ -108,6 +110,8 @@ class TaskAssignment(models.Model):
         super().save(*args, **kwargs)
 
     # ================= TIME CALCULATION =================
+    
+    @property
     def total_duration(self):
         logs = self.time_logs.all()
         total = timedelta()
@@ -117,6 +121,28 @@ class TaskAssignment(models.Model):
                 total += (log.end_time - log.start_time)
 
         return total
+
+
+# ================= FORMATTED TIME (NEW) =================
+    @property
+    def formatted_duration(self):
+        duration = self.total_duration
+
+        if not duration:
+            return "-"
+
+        total_seconds = int(duration.total_seconds())
+
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+
+        if hours > 0:
+            return f"{hours}h {minutes}m"
+        elif minutes > 0:
+            return f"{minutes}m {seconds}s"
+        else:
+            return f"{seconds}s"
 
     # ================= LATE CHECK =================
     def is_late(self):
@@ -166,6 +192,7 @@ class TaskTimeLog(models.Model):
 
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
+    is_rework = models.BooleanField(default=False)
 
     def duration(self):
         if self.end_time:

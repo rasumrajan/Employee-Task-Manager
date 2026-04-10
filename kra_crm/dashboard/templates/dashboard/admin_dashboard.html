@@ -52,17 +52,50 @@
 
     </div>
 
-    <!-- ================= TOP PERFORMER ================= -->
-    {% if top_performer %}
-    <div class="card mt-4 shadow-sm text-center border-success">
-        <div class="card-body">
-            <h5 class="text-success">🏆 Top Performer</h5>
-            <h3>{{ top_performer.employee.user.username }}</h3>
-            <p class="text-muted">{{ top_performer.employee.designation }}</p>
-            <h4 class="text-primary">{{ top_performer.performance }}%</h4>
+   <!-- ================= TOP PERFORMER ================= -->
+{% if top_performer %}
+<div class="card mt-4 shadow-lg border-0 top-performer-card">
+
+    <div class="card-body text-center position-relative">
+
+        <!-- Crown -->
+        <div class="crown-icon">👑</div>
+
+        <!-- Profile Image -->
+        <div class="profile-wrapper">
+
+            {% if top_performer.employee.profile_image %}
+                <img src="{{ top_performer.employee.profile_image.url }}"
+                     class="profile-img">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ top_performer.employee.user.username }}"
+                     class="profile-img">
+            {% endif %}
+
+            <!-- Online dot -->
+            <span class="online-dot"></span>
+
         </div>
+
+        <h6 class="text-light mt-3 mb-1">Top Performer</h6>
+
+        <h3 class="text-white font-weight-bold">
+            {{ top_performer.employee.user.username }}
+        </h3>
+
+        <p class="text-light mb-2">
+            {{ top_performer.employee.designation }}
+        </p>
+
+        <!-- Performance -->
+        <div class="performance-badge">
+            {{ top_performer.performance }}%
+        </div>
+
     </div>
-    {% endif %}
+
+</div>
+{% endif %}
 
     <!-- ================= DEPARTMENT CARDS (CLICKABLE) ================= -->
     <div class="mt-4">
@@ -87,13 +120,19 @@
 
     <!-- ================= EMPLOYEE RANKING ================= -->
     <div class="card mt-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            Employee Ranking
-        </div>
-        <div class="card-body">
 
-            <table class="table table-hover table-bordered">
-                <thead>
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span>Employee Ranking</span>
+        <small class="text-light">Top Performers</small>
+    </div>
+
+    <div class="card-body p-0">
+
+        <div style="max-height: 350px; overflow-y: auto;">
+
+            <table class="table table-hover table-bordered mb-0">
+
+                <thead style="position: sticky; top: 0; background: #fff; z-index: 10;">
                     <tr>
                         <th>Rank</th>
                         <th>Employee</th>
@@ -103,27 +142,48 @@
 
                 <tbody>
                     {% for d in data %}
-                    <tr>
-                        <td style="font-size:18px;">{{ d.medal }}</td>
+                    <tr class="
+                        {% if forloop.first %}table-success
+                        {% elif forloop.counter == 2 %}table-warning
+                        {% elif forloop.counter == 3 %}table-info
+                        {% endif %}
+                    ">
+
+                        <!-- RANK -->
+                        <td style="font-size:18px; font-weight:bold;">
+                            {{ d.medal }}
+                        </td>
+
+                        <!-- EMPLOYEE -->
                         <td>
                             <strong>{{ d.employee.user.username }}</strong><br>
                             <small class="text-muted">{{ d.employee.designation }}</small>
                         </td>
-                        <td>
+
+                        <!-- PERFORMANCE -->
+                        <td style="min-width:180px;">
                             <div class="progress">
-                                <div class="progress-bar bg-success"
-                                     style="width: {{ d.performance }}%">
+                                <div class="progress-bar 
+                                    {% if d.performance >= 80 %}bg-success
+                                    {% elif d.performance >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    style="width: {{ d.performance }}%">
                                     {{ d.performance }}%
                                 </div>
                             </div>
                         </td>
+
                     </tr>
                     {% endfor %}
                 </tbody>
+
             </table>
 
         </div>
+
     </div>
+
+</div>
 
     <!-- ================= CHARTS ================= -->
     <div class="row mt-4">
@@ -142,17 +202,151 @@
 
         <!-- DEPARTMENT CHART -->
         <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
-                    Department Analysis
+            <div class="card shadow-lg border-0">
+
+                <div class="card-header bg-dark text-white d-flex justify-content-between">
+                    <span>Department Analysis</span>
+                    <small>Performance Overview</small>
                 </div>
+
                 <div class="card-body">
-                    <canvas id="deptChart"></canvas>
+                    <canvas id="deptChart" style="height:300px;"></canvas>
                 </div>
+
             </div>
         </div>
 
     </div>
+
+    <!-- ================= TASK APPROVAL ================= -->
+<div class="card mt-4 shadow-sm">
+
+    <div class="card-header bg-success text-white">
+        Pending Approvals
+    </div>
+
+    <div class="card-body table-responsive">
+
+        <table class="table table-bordered table-hover">
+
+            <thead class="thead-light">
+                <tr>
+                    <th>Employee</th>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for t in tasks %}
+                <tr>
+
+                    <!-- EMPLOYEE -->
+                    <td>{{ t.employee.user.username }}</td>
+
+                    <!-- TASK -->
+                    <td>{{ t.task.title }}</td>
+
+                    <!-- STATUS -->
+                    <td>
+                        <!-- DEBUG (REMOVE AFTER TEST) -->
+                        <small style="color:red;">({{ t.status }})</small>
+
+                        {% if t.status|lower == 'done' %}
+                            <span class="badge badge-warning">Waiting Approval</span>
+
+                        {% elif t.status|lower == 'completed' %}
+                            <span class="badge badge-success">Approved</span>
+
+                        {% else %}
+                            <span class="badge badge-secondary">
+                                {{ t.status }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- DEADLINE -->
+                    <td>{{ t.deadline }}</td>
+
+                    <!-- ACTION -->
+                   <td>
+
+                    {% if t.status == 'done' %}
+                        <!-- APPROVE -->
+                        <a href="{% url 'approve_task' t.id %}" 
+                        class="btn btn-success btn-sm">
+                            ✔ Approve
+                        </a>
+
+                        <!-- REJECT BUTTON -->
+                        <button class="btn btn-danger btn-sm" 
+                                data-toggle="modal" 
+                                data-target="#rejectModal{{ t.id }}">
+                            ❌ Reject
+                        </button>
+
+                        <!-- MODAL -->
+                        <div class="modal fade" id="rejectModal{{ t.id }}">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+
+                                    <form method="POST" action="{% url 'reject_task' t.id %}">
+                                        {% csrf_token %}
+
+                                        <div class="modal-header">
+                                            <h5>Reject Task</h5>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <textarea name="reason" class="form-control" 
+                                                placeholder="Enter rejection reason..." required></textarea>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button class="btn btn-danger">Submit</button>
+                                        </div>
+
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    {% elif t.status == 'completed' %}
+                        <span class="badge badge-success">Approved</span>
+
+                    {% elif t.status == 'rejected' %}
+                        <span class="badge badge-danger">Rejected</span>
+
+                    {% else %}
+                        <span class="text-muted">--</span>
+                    {% endif %}
+
+                </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">
+                        No tasks for approval
+                    </td>
+                </tr>
+                
+                {% endfor %}
+
+                
+
+                </tbody>
+
+        </table>
+
+    </div>
+
+</div>
 
 </div>
 
@@ -167,23 +361,123 @@
 .border-left-success { border-left: 5px solid #28a745; }
 .border-left-warning { border-left: 5px solid #ffc107; }
 .border-left-danger { border-left: 5px solid #dc3545; }
+
+/* CARD */
+.top-performer-card {
+    background: linear-gradient(135deg, #1d2671, #c33764);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+    position: relative;
+}
+
+.top-performer-card:hover {
+    transform: translateY(-6px) scale(1.02);
+}
+
+/* PROFILE */
+.profile-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* ONLINE DOT */
+.online-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 14px;
+    height: 14px;
+    background: #28a745;
+    border: 2px solid #fff;
+    border-radius: 50%;
+}
+
+/* CROWN */
+.crown-icon {
+    font-size: 28px;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    animation: float 2s ease-in-out infinite;
+}
+
+/* FLOAT ANIMATION */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+
+/* PERFORMANCE BADGE */
+.performance-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* GLOW EFFECT */
+.top-performer-card::after {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+    top: -50%;
+    left: -50%;
+    animation: rotateGlow 6s linear infinite;
+}
+
+@keyframes rotateGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
 
 <!-- ================= CHART JS ================= -->
+<!-- CHART JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+
+// ================= EMPLOYEE CHART (FIXED) =================
 new Chart(document.getElementById('empChart'), {
     type: 'bar',
     data: {
         labels: {{ employee_labels|safe }},
         datasets: [{
             label: 'Performance %',
-            data: {{ employee_performance|safe }}
+            data: {{ employee_performance|safe }},
+            backgroundColor: '#17a2b8',
+            borderRadius: 8
         }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true, max: 100 }
+        }
     }
 });
 
+// ================= DEPARTMENT CHART =================
 new Chart(document.getElementById('deptChart'), {
     type: 'bar',
     data: {
@@ -191,19 +485,26 @@ new Chart(document.getElementById('deptChart'), {
         datasets: [
             {
                 label: 'Completed',
-                data: {{ dept_completed|safe }}
+                data: {{ dept_completed|safe }},
+                backgroundColor: '#28a745'
             },
             {
                 label: 'Pending',
-                data: {{ dept_pending|safe }}
+                data: {{ dept_pending|safe }},
+                backgroundColor: '#ffc107'
             },
             {
                 label: 'Late',
-                data: {{ dept_late|safe }}
+                data: {{ dept_late|safe }},
+                backgroundColor: '#dc3545'
             }
         ]
+    },
+    options: {
+        responsive: true
     }
 });
+
 </script>
 
 {% endblock %}

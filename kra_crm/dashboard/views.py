@@ -9,9 +9,31 @@ from datetime import date, timedelta
 
 from employees.models import Employee, Department
 from tasks.models import TaskAssignment
+from tasks.views import calculate_times
 
 
 # ================= PERFORMANCE FUNCTION =================
+def calculate_times(task):
+    total = 0
+    rework = 0
+
+    logs = task.time_logs.all()
+
+    for log in logs:
+        if log.end_time:
+            duration = (log.end_time - log.start_time).total_seconds()
+
+            total += duration
+
+            if getattr(log, 'is_rework', False):
+                rework += duration
+
+    return {
+        "total_hours": round(total / 3600, 2),
+        "rework_hours": round(rework / 3600, 2),
+        "actual_hours": round((total - rework) / 3600, 2)
+    }
+
 def calculate_performance(tasks):
     total = tasks.count()
 
@@ -96,11 +118,10 @@ def dashboard(request):
 
         performance = int(((completed_tasks - late_tasks) / total_tasks) * 100) if total_tasks > 0 else 0
 
-        # ================= EMPLOYEE CHART =================
+        # ================= CHART DATA =================
         employee_labels = [d['employee'].user.username for d in data]
         employee_performance = [d['performance'] for d in data]
 
-        # ================= DEPARTMENT CHART =================
         dept_labels = []
         dept_completed = []
         dept_pending = []
@@ -128,6 +149,15 @@ def dashboard(request):
                 ).count()
             )
 
+        # ================= FIX: TASKS FOR APPROVAL =================
+        tasks = all_tasks.filter(status__iexact='done').order_by('-assigned_date')
+        for t in tasks:
+            times = calculate_times(t)
+            t.total_hours = times["total_hours"]
+            t.rework_hours = times["rework_hours"]
+            t.actual_hours = times["actual_hours"]
+
+        # ================= RETURN =================
         return render(request, 'dashboard/admin_dashboard.html', {
             'data': data,
             'top_performer': top_performer,
@@ -139,7 +169,7 @@ def dashboard(request):
             'late_tasks': late_tasks,
             'performance': performance,
 
-            # Charts (FIXED JSON)
+            # Charts
             'employee_labels': json.dumps(employee_labels),
             'employee_performance': json.dumps(employee_performance),
 
@@ -148,8 +178,12 @@ def dashboard(request):
             'dept_pending': json.dumps(dept_pending),
             'dept_late': json.dumps(dept_late),
 
-            # Departments clickable
+            # Departments
             'departments': Department.objects.all(),
+
+            #  IMPORTANT FIXES
+            'tasks': tasks,
+            'now': timezone.now(),
         })
 
     # ================= ROLE BASE =================
@@ -203,7 +237,6 @@ def dashboard(request):
                 'performance': emp_performance
             })
 
-        #  FIXED (OUTSIDE LOOP)
         data.sort(key=lambda x: x['performance'], reverse=True)
 
         for i, item in enumerate(data):
@@ -230,8 +263,21 @@ def dashboard(request):
     else:
 
         tasks = TaskAssignment.objects.filter(employee=employee)
+        for t in tasks:
+            times = calculate_times(t)
+            t.total_hours = times["total_hours"]
+            t.rework_hours = times["rework_hours"]
+            t.actual_hours = times["actual_hours"]
 
-        performance, total, completed, late = calculate_performance(tasks)
+        total = tasks.count()
+        completed = tasks.filter(status__iexact='completed').count()
+
+        late = tasks.filter(
+            status__iexact='completed',
+            completed_at__gt=F('deadline')
+        ).count()
+
+        performance = int(((completed - late) / total) * 100) if total > 0 else 0
 
         today = timezone.now().date()
 
@@ -274,7 +320,7 @@ def dashboard(request):
             'completed': completed,
             'late': late,
             'performance': performance,
-
+            'task_data': tasks,
             'labels': json.dumps(labels),
             'daily_performance': json.dumps(daily_performance),
 
@@ -349,3 +395,4 @@ def department_employees(request, dept_id):
         'late_tasks': late_tasks,
         'performance': performance,
     })
+    
