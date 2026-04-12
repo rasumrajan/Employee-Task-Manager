@@ -61,7 +61,7 @@ class TaskAssignment(models.Model):
 
     progress = models.IntegerField(default=0)
     remarks = models.TextField(blank=True, null=True)
-
+    
     start_time = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
@@ -121,7 +121,59 @@ class TaskAssignment(models.Model):
                 total += (log.end_time - log.start_time)
 
         return total
+    
+# =============== Add this new For expected =================
 
+    @property
+    def expected_hours(self):
+        if self.task and self.task.expected_duration:
+            return round(self.task.expected_duration.total_seconds() / 3600, 2)
+        return 0
+
+    @property
+    def actual_hours(self):
+        total = 0
+
+        for log in self.time_logs.all():
+            if log.end_time:
+                total += (log.end_time - log.start_time).total_seconds()
+
+        return round(total / 3600, 2)
+    
+    @property
+    def rework_hours(self):
+        total = 0
+
+        for log in self.time_logs.all():
+            if log.end_time and log.is_rework:
+                total += (log.end_time - log.start_time).total_seconds()
+
+        return round(total / 3600, 2)
+    
+    @property
+    def efficiency(self):
+        expected = self.expected_hours
+        actual = self.actual_hours
+
+        if expected > 0 and actual > 0:
+            eff = (expected / actual) * 100
+            #  LIMIT MAX VALUE
+            return round(min(eff, 150), 1)
+            #return round((expected / actual) * 100, 1)
+        return 0
+    
+    @property
+    def efficiency_score(self):
+        eff = self.efficiency
+
+        if eff >= 100:
+            return "Excellent"
+        elif eff >= 80:
+            return "Good"
+        elif eff >= 50:
+            return "Average"
+        else:
+            return "Poor"
 
 # ================= FORMATTED TIME (NEW) =================
     @property

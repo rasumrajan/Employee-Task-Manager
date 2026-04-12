@@ -41,3 +41,12 @@ class Employee(models.Model):
 
     def get_full_name(self):
         return f"{self.user.first_name} {self.user.last_name}".strip()
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
+
+    def __str__(self):
+        return self.user.username
+        
+        

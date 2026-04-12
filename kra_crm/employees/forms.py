@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Employee
+from .models import Employee, UserProfile
+from django.contrib.auth.forms import PasswordChangeForm
 
 
 class EmployeeForm(forms.ModelForm):
@@ -99,3 +100,34 @@ class EmployeeForm(forms.ModelForm):
             employee.save()
 
         return employee
+    
+class EmployeePasswordChangeForm(PasswordChangeForm):
+
+    old_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        label="Current Password"
+    )
+
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        label="New Password"
+    )
+
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        label="Confirm Password"
+    )
+    
+class EmployeeProfileImageForm(forms.ModelForm):
+    class Meta:
+        model = Employee
+        fields = ['profile_image']
+
+        widgets = {
+            'profile_image': forms.FileInput(attrs={'class': 'form-control'})
+        }
+        
+class AdminProfileImageForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_image']

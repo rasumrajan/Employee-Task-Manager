@@ -11,7 +11,7 @@ def user_login(request):
 
         if user:
             login(request, user)
-            return redirect('dashboard')   #  FIXED
+            return redirect('dashboard')   
         else:
             return render(request, 'accounts/login.html', {
                 'error': 'Invalid credentials'

@@ -1,16 +1,91 @@
 import json
 from urllib import request
 
+from django import forms
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.utils import timezone
 from datetime import date, timedelta
-
-from employees.models import Employee, Department
+from employees.forms import AdminProfileImageForm, EmployeeProfileImageForm
+from employees.models import Employee, Department, UserProfile
 from tasks.models import TaskAssignment
 from tasks.views import calculate_times
+from employees.forms import EmployeePasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
+#=========for reset password============================
+@login_required
+def change_password(request):
+
+    if request.method == 'POST':
+        form = EmployeePasswordChangeForm(request.user, request.POST)
+
+        if form.is_valid():
+            user = form.save()
+
+            #  important (keeps user logged in)
+            update_session_auth_hash(request, user)
+
+            return redirect('dashboard')
+
+    else:
+        form = EmployeePasswordChangeForm(request.user)
+
+    return render(request, 'accounts/change_password.html', {'form': form})
+
+
+#=========update profile image===========================
+#  DYNAMIC FORM
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Employee
+        fields = ['profile_image']
+
+
+@login_required
+def update_profile_image(request):
+
+    user = request.user
+
+    # ================= EMPLOYEE =================
+    if hasattr(user, 'employee'):
+        employee = user.employee
+
+        if request.method == 'POST':
+            form = EmployeeProfileImageForm(
+                request.POST,
+                request.FILES,
+                instance=employee
+            )
+
+            if form.is_valid():
+                form.save()
+                return redirect('dashboard')
+
+        else:
+            form = EmployeeProfileImageForm(instance=employee)
+
+    # ================= ADMIN =================
+    else:
+
+        profile, created = UserProfile.objects.get_or_create(user=user)
+
+        if request.method == 'POST':
+            form = AdminProfileImageForm(
+                request.POST,
+                request.FILES,
+                instance=profile
+            )
+
+            if form.is_valid():
+                form.save()
+                return redirect('dashboard')
+
+        else:
+            form = AdminProfileImageForm(instance=profile)
+
+    return render(request, 'accounts/update_profile.html', {'form': form})
 
 # ================= PERFORMANCE FUNCTION =================
 def calculate_times(task):
@@ -151,11 +226,11 @@ def dashboard(request):
 
         # ================= FIX: TASKS FOR APPROVAL =================
         tasks = all_tasks.filter(status__iexact='done').order_by('-assigned_date')
-        for t in tasks:
-            times = calculate_times(t)
-            t.total_hours = times["total_hours"]
-            t.rework_hours = times["rework_hours"]
-            t.actual_hours = times["actual_hours"]
+       # for t in tasks:
+       #     times = calculate_times(t)
+       #     t.total_hours = times["total_hours"]
+       #     t.rework_hours = times["rework_hours"]
+       #     t.actual_hours = times["actual_hours"]
 
         # ================= RETURN =================
         return render(request, 'dashboard/admin_dashboard.html', {
@@ -263,11 +338,7 @@ def dashboard(request):
     else:
 
         tasks = TaskAssignment.objects.filter(employee=employee)
-        for t in tasks:
-            times = calculate_times(t)
-            t.total_hours = times["total_hours"]
-            t.rework_hours = times["rework_hours"]
-            t.actual_hours = times["actual_hours"]
+        
 
         total = tasks.count()
         completed = tasks.filter(status__iexact='completed').count()

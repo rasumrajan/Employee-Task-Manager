@@ -7,145 +7,109 @@
 
 <div class="card shadow-sm">
 
-    <!-- ================= HEADER ================= -->
+    <!-- HEADER -->
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-tasks"></i> Task Performance Dashboard</h5>
     </div>
 
-    <!-- ================= FILTERS ================= -->
-   <div class="card-body border-bottom bg-light">
+    <!-- FILTERS -->
+    <div class="card-body border-bottom bg-light">
 
-    <form method="get" action="" class="form-row align-items-end">
+        <form method="get" class="form-row align-items-end">
 
-        <!--  SEARCH -->
-        <div class="col-md-3 mb-2">
-            <label class="small text-muted">Search</label>
-            <input type="text" name="search"
-                   value="{{ search|default:'' }}"
-                   class="form-control"
-                   placeholder="Employee / Task">
-        </div>
-
-        <!-- STATUS -->
-        <div class="col-md-2 mb-2">
-            <label class="small text-muted">Status</label>
-            <select name="status" class="form-control">
-
-                <option value="">All</option>
-
-                <option value="assigned" {% if status == "assigned" %}selected{% endif %}>Assigned</option>
-                <option value="accepted" {% if status == "accepted" %}selected{% endif %}>Accepted</option>
-                <option value="in_progress" {% if status == "in_progress" %}selected{% endif %}>In Progress</option>
-                <option value="paused" {% if status == "paused" %}selected{% endif %}>Paused</option>
-                <option value="completed" {% if status == "completed" %}selected{% endif %}>Completed</option>
-
-                <!--  NEW -->
-                <option value="pending" {% if status == "pending" %}selected{% endif %}>Pending</option>
-                <option value="late" {% if status == "late" %}selected{% endif %}>Late</option>
-                <option value="overdue" {% if status == "overdue" %}selected{% endif %}>Overdue</option>
-
-            </select>
-        </div>
-
-        <!--  EMPLOYEE -->
-        <div class="col-md-3 mb-2">
-            <label class="small text-muted">Employee</label>
-            <select name="employee" class="form-control">
-                <option value="">All Employees</option>
-
-                {% for emp in employees %}
-                <option value="{{ emp.id }}"
-                    {% if employee_id|default:'' == emp.id|stringformat:"s" %}selected{% endif %}>
-                    {{ emp.user.username }}
-                </option>
-                {% endfor %}
-
-            </select>
-        </div>
-
-        <!--  ACTION BUTTONS -->
-        <div class="col-md-4 mb-2">
-
-            <div class="d-flex">
-
-                <!-- APPLY -->
-                <button type="submit" class="btn btn-primary mr-2 flex-fill">
-                    <i class="fas fa-filter"></i> Apply
-                </button>
-
-                <!-- RESET -->
-                <a href="{% url 'all_tasks' %}" class="btn btn-outline-secondary flex-fill">
-                    <i class="fas fa-undo"></i> Reset
-                </a>
-
+            <div class="col-md-3 mb-2">
+                <label class="small text-muted">Search</label>
+                <input type="text" name="search" value="{{ search|default:'' }}"
+                       class="form-control" placeholder="Employee / Task">
             </div>
 
-        </div>
+            <div class="col-md-2 mb-2">
+                <label class="small text-muted">Status</label>
+                <select name="status" class="form-control">
+                    <option value="">All</option>
+                    <option value="assigned" {% if status == "assigned" %}selected{% endif %}>Assigned</option>
+                    <option value="accepted" {% if status == "accepted" %}selected{% endif %}>Accepted</option>
+                    <option value="in_progress" {% if status == "in_progress" %}selected{% endif %}>In Progress</option>
+                    <option value="paused" {% if status == "paused" %}selected{% endif %}>Paused</option>
+                    <option value="completed" {% if status == "completed" %}selected{% endif %}>Completed</option>
+                    <option value="pending" {% if status == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="late" {% if status == "late" %}selected{% endif %}>Late</option>
+                    <option value="overdue" {% if status == "overdue" %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
 
-    </form>
+            <div class="col-md-3 mb-2">
+                <label class="small text-muted">Employee</label>
+                <select name="employee" class="form-control">
+                    <option value="">All Employees</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}"
+                        {% if employee_id|default:'' == emp.id|stringformat:"s" %}selected{% endif %}>
+                        {{ emp.user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-</div>
+            <div class="col-md-4 mb-2 d-flex">
+                <button class="btn btn-primary mr-2 flex-fill">Apply</button>
+                <a href="{% url 'all_tasks' %}" class="btn btn-outline-secondary flex-fill">Reset</a>
+            </div>
 
-   <div class="card-body p-0">
+        </form>
 
-    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+    </div>
 
-        <table class="table table-hover align-middle mb-0">
+    <!-- TABLE -->
+    <div class="card-body p-0">
 
-            <!-- HEADER -->
-            <thead class="bg-dark text-white" style="position: sticky; top: 0; z-index: 10;">
-                <tr>
-                    <th>ID</th>
-                    <th>Employee</th>
-                    <th>Task</th>
-                    <th>Priority</th>
-                    <th>Assigned</th>
-                    <th>Deadline</th>
-                    <th>Status</th>
-                    <th>Completed</th>
-                    <th style="min-width:140px;">Time</th>
-                    <th>Delay</th>
-                    <th style="min-width:160px;">Performance</th>
-                </tr>
-            </thead>
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
 
-            <tbody>
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="bg-dark text-white" style="position: sticky; top: 0;">
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Task</th>
+                        <th>Priority</th>
+                        <th>Assigned</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Completed</th>
+                        <th>Time</th>
+                        <th>Expected</th>
+                        <th>Efficiency</th>
+                        <th>Score</th>
+                        <th>Delay</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
 
                 {% for t in tasks %}
                 <tr>
 
-                    <!-- ID -->
-                    <td>
-                        <span class="badge badge-light">
-                            {{ t.employee.emp_id }}
-                        </span>
-                    </td>
+                    <td><span class="badge badge-light">{{ t.employee.emp_id }}</span></td>
 
-                    <!-- EMPLOYEE -->
                     <td>
                         <div class="d-flex align-items-center">
-
                             <div class="avatar-circle mr-2">
                                 {{ t.employee.user.username|first|upper }}
                             </div>
-
                             <div>
                                 <strong>{{ t.employee.user.username }}</strong><br>
                                 <small class="text-muted">{{ t.employee.designation }}</small>
                             </div>
-
                         </div>
                     </td>
 
-                    <!-- TASK -->
                     <td>
                         <strong>{{ t.task.title }}</strong><br>
-                        <small class="text-muted">
-                            {{ t.task.description|truncatewords:5 }}
-                        </small>
+                        <small class="text-muted">{{ t.task.description|truncatewords:5 }}</small>
                     </td>
 
-                    <!-- PRIORITY -->
                     <td>
                         <span class="badge 
                             {% if t.priority == 'high' %}badge-danger
@@ -155,19 +119,14 @@
                         </span>
                     </td>
 
-                    <!-- ASSIGNED -->
-                    <td>
-                        <small>{{ t.assigned_date|date:"d M Y" }}</small>
-                    </td>
+                    <td><small>{{ t.assigned_date|date:"d M Y" }}</small></td>
 
-                    <!-- DEADLINE -->
                     <td>
                         <small class="{% if t.deadline < now and t.status != 'completed' %}text-danger{% endif %}">
                             {{ t.deadline|date:"d M Y" }}
                         </small>
                     </td>
 
-                    <!-- STATUS -->
                     <td>
                         <span class="badge
                             {% if t.status == 'completed' %}badge-success
@@ -180,7 +139,6 @@
                         </span>
                     </td>
 
-                    <!-- COMPLETED -->
                     <td>
                         {% if t.completed_at %}
                             <small>{{ t.completed_at|date:"d M" }}</small>
@@ -189,25 +147,42 @@
                         {% endif %}
                     </td>
 
-                    <!-- TIME (FIXED PROFESSIONAL VERSION) -->
+                    <!-- TIME -->
                     <td>
                         <div class="time-box">
-
-                            <div class="total-time">
-                                {{ t.total_hours|default:"0" }}h
-                            </div>
-
-                            <small class="work-time">
-                                Work: {{ t.actual_hours|default:"0" }}h
-                            </small>
-
-                            {% if t.rework_hours and t.rework_hours > 0 %}
-                                <small class="rework-time">
-                                    Rework: {{ t.rework_hours }}h
-                                </small>
+                            <div class="total-time">{{ t.actual_hours|default:"0" }}h</div>
+                            <small class="work-time">Work: {{ t.actual_hours|default:"0" }}h</small>
+                            {% if t.rework_hours > 0 %}
+                                <small class="rework-time">Rework: {{ t.rework_hours }}h</small>
                             {% endif %}
-
                         </div>
+                    </td>
+
+                    <!-- EXPECTED -->
+                    <td>
+                        <span class="badge badge-info">{{ t.expected_hours }}h</span>
+                    </td>
+
+                    <!-- EFFICIENCY -->
+                    <td>
+                        <span class="badge
+                            {% if t.efficiency >= 100 %}badge-success
+                            {% elif t.efficiency >= 80 %}badge-info
+                            {% elif t.efficiency >= 50 %}badge-warning
+                            {% else %}badge-danger{% endif %}">
+                            {{ t.efficiency }}%
+                        </span>
+                    </td>
+
+                    <!-- SCORE -->
+                    <td>
+                        <span class="badge
+                            {% if t.efficiency_score == 'Excellent' %}badge-success
+                            {% elif t.efficiency_score == 'Good' %}badge-info
+                            {% elif t.efficiency_score == 'Average' %}badge-warning
+                            {% else %}badge-danger{% endif %}">
+                            {{ t.efficiency_score }}
+                        </span>
                     </td>
 
                     <!-- DELAY -->
@@ -221,18 +196,11 @@
 
                     <!-- PERFORMANCE -->
                     <td>
-                        <div class="progress" style="height: 18px;">
-
-                            <div class="progress-bar 
-                                {% if t.performance_score >= 80 %}bg-success
-                                {% elif t.performance_score >= 50 %}bg-warning
-                                {% else %}bg-danger{% endif %}"
-                                style="width: {{ t.performance_score }}%;">
-
-                                <small>{{ t.performance_score }}%</small>
-
+                        <div class="progress" style="height:18px;">
+                            <div class="progress-bar bg-success"
+                                style="width: {{ t.efficiency }}%;">
+                                {{ t.efficiency }}%
                             </div>
-
                         </div>
                     </td>
 
@@ -240,107 +208,53 @@
 
                 {% empty %}
                 <tr>
-                    <td colspan="11" class="text-center py-5 text-muted">
-                        <i class="fas fa-tasks fa-2x mb-2"></i><br>
+                    <td colspan="14" class="text-center py-5 text-muted">
                         No tasks found
                     </td>
                 </tr>
                 {% endfor %}
 
-            </tbody>
+                </tbody>
 
-        </table>
+            </table>
 
-    </div>
-
-</div>
-    <!-- ================= PAGINATION ================= -->
-    <div class="card-footer text-center">
-
-        <nav>
-            <ul class="pagination justify-content-center mb-0">
-
-                {% if tasks.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1&search={{ search }}&status={{ status }}&employee={{ employee_id }}">First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ tasks.previous_page_number }}&search={{ search }}&status={{ status }}&employee={{ employee_id }}">Previous</a>
-                </li>
-                {% endif %}
-
-                <li class="page-item active">
-                    <span class="page-link">
-                        Page {{ tasks.number }} / {{ tasks.paginator.num_pages }}
-                    </span>
-                </li>
-
-                {% if tasks.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ tasks.next_page_number }}&search={{ search }}&status={{ status }}&employee={{ employee_id }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ tasks.paginator.num_pages }}&search={{ search }}&status={{ status }}&employee={{ employee_id }}">Last</a>
-                </li>
-                {% endif %}
-
-            </ul>
-        </nav>
+        </div>
 
     </div>
 
 </div>
 
 <style>
-
 .avatar-circle {
     width: 35px;
     height: 35px;
     background: #007bff;
     color: #fff;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
 }
 
-/* TIME BOX STYLE */
 .time-box {
-    background: #f8f9fa;
-    padding: 6px;
-    border-radius: 6px;
-    text-align: center;
+    background:#f8f9fa;
+    padding:6px;
+    border-radius:6px;
+    text-align:center;
 }
 
-.total-time {
-    font-weight: bold;
-    font-size: 14px;
-}
+.total-time { font-weight:bold; }
+.work-time { color:#28a745; display:block; }
+.rework-time { color:#dc3545; display:block; }
 
-.work-time {
-    color: #28a745;
-    display: block;
-}
-
-.rework-time {
-    color: #dc3545;
-    display: block;
-}
-
-/* HOVER */
 .table tbody tr:hover {
-    background-color: #f1f3f5;
-    transition: 0.2s;
+    background:#f1f3f5;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-    table {
-        font-size: 12px;
-    }
+@media (max-width:768px){
+    table { font-size:12px; }
 }
-
 </style>
 
 {% endblock %}
