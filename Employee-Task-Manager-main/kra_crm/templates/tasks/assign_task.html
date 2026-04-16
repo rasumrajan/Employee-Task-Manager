@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Assign Task{% endblock %}
+{% block header_title %}Assign Task{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <div class="card shadow-sm">
+
+            <!-- Header -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks"></i> Assign New Task
+                </h5>
+
+                <a href="{% url 'all_tasks' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+
+            <!-- Form -->
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="card-body">
+
+                    <!-- Error -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please fix the errors below.</strong>
+                    </div>
+                    {% endif %}
+
+                    <!-- ================= TASK INFO ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-clipboard-list"></i> Task Details
+                    </h6>
+
+                    <div class="row">
+
+                        <!-- Employee -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> Assign To</label>
+                                {{ form.employee }}
+                                <small class="text-danger">{{ form.employee.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Task Template -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fas fa-list"></i> Task</label>
+                                {{ form.task }}
+                                <small class="text-danger">{{ form.task.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 🔥 AUTO DURATION DISPLAY -->
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label><i class="fas fa-clock"></i> Expected Duration</label>
+                                <input type="text" id="task-duration" class="form-control" readonly placeholder="Auto filled">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- ================= DEADLINE ================= -->
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-calendar-alt"></i> Schedule
+                    </h6>
+
+                    <div class="row">
+
+                        <!-- Deadline -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Deadline</label>
+                                {{ form.deadline }}
+                                <small class="text-danger">{{ form.deadline.errors }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Priority</label>
+                                {{ form.priority }}
+                                <small class="text-danger">{{ form.priority.errors }}</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <!-- Info Box -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Duration is auto-fetched from task template. Deadline should match expected work time.
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="card-footer d-flex justify-content-between">
+
+                    <a href="{% url 'all_tasks' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+
+                    <button class="btn btn-success">
+                        <i class="fas fa-check"></i> Assign Task
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= JS AUTO FETCH ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const taskSelect = document.getElementById("id_task");
+    const durationField = document.getElementById("task-duration");
+    const deadlineField = document.getElementById("id_deadline");
+
+    taskSelect.addEventListener("change", function() {
+
+        const taskId = this.value;
+
+        if (taskId) {
+
+            fetch(`/tasks/get-task-duration/${taskId}/`)
+                .then(response => response.json())
+                .then(data => {
+
+                    if (data.duration) {
+
+                        // 🔹 Show duration
+                        durationField.value = data.duration;
+
+                        //  AUTO DEADLINE CALCULATION
+                        const duration = data.duration;
+
+                        let hours = 0;
+                        let minutes = 0;
+
+                        // Handle format HH:MM:SS
+                        const parts = duration.split(":");
+
+                        if (parts.length >= 2) {
+                            hours = parseInt(parts[0]) || 0;
+                            minutes = parseInt(parts[1]) || 0;
+                        }
+
+                        // Current time
+                        const now = new Date();
+
+                        // Add duration
+                        now.setHours(now.getHours() + hours);
+                        now.setMinutes(now.getMinutes() + minutes);
+
+                        // Convert to datetime-local format
+                        const yyyy = now.getFullYear();
+                        const mm = String(now.getMonth() + 1).padStart(2, '0');
+                        const dd = String(now.getDate()).padStart(2, '0');
+                        const hh = String(now.getHours()).padStart(2, '0');
+                        const min = String(now.getMinutes()).padStart(2, '0');
+
+                        const formatted = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+
+                        // 🔥 Set deadline automatically
+                        deadlineField.value = formatted;
+                    }
+
+                });
+
+        } else {
+            durationField.value = "";
+            deadlineField.value = "";
+        }
+
+    });
+
+});
+</script>
+
+{% endblock %}

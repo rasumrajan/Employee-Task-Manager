@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ department.name }} Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- ================= HEADER ================= -->
+    <div class="mb-3">
+        <h2>{{ department.name }} Department</h2>
+        <p class="text-muted">Overview of team performance and tasks</p>
+    </div>
+
+    <!-- ================= KPI CARDS ================= -->
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h4>{{ total_tasks }}</h4>
+                    <p>Total Tasks</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h4>{{ completed_tasks }}</h4>
+                    <p>Completed</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h4>{{ pending_tasks }}</h4>
+                    <p>Pending</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h4>{{ late_tasks }}</h4>
+                    <p>Late</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= PERFORMANCE BAR ================= -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5>Overall Performance</h5>
+            <div class="progress">
+                <div class="progress-bar bg-info"
+                     style="width: {{ performance }}%">
+                    {{ performance }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EMPLOYEE TABLE ================= -->
+    <div class="card mt-4">
+
+        <div class="card-header">
+            <h4>Employees Performance</h4>
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-bordered table-hover">
+
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Employee</th>
+                        <th>Total Tasks</th>
+                        <th>Completed</th>
+                        <th>Late</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for d in data %}
+                    <tr>
+                        <td>{{ d.employee.user.username }}</td>
+                        <td>{{ d.total }}</td>
+                        <td>{{ d.completed }}</td>
+                        <td>{{ d.late }}</td>
+
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar 
+                                    {% if d.performance >= 80 %}bg-success
+                                    {% elif d.performance >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    style="width: {{ d.performance }}%">
+                                    {{ d.performance }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            No employees or tasks found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Manager Dashboard{% endblock %}
+{% block header_title %}Team Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="mb-3">
+        <h3>{{ department.name }} Department</h3>
+        <p class="text-muted">Manage team performance and productivity</p>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6>Total Tasks</h6>
+                    <h3>{{ total_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6>Completed</h6>
+                    <h3 class="text-success">{{ completed_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6>Pending</h6>
+                    <h3 class="text-warning">{{ pending_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6>Late</h6>
+                    <h3 class="text-danger">{{ late_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TOP PERFORMER -->
+    {% if top_performer %}
+    <div class="card mt-4 shadow-sm border-success text-center">
+        <div class="card-body">
+            <h5 class="text-success">🏆 Top Performer</h5>
+            <h3>{{ top_performer.employee.user.username }}</h3>
+            <p class="mb-1">{{ top_performer.employee.designation }}</p>
+            <h4 class="text-primary">{{ top_performer.performance }}%</h4>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- PERFORMANCE BAR -->
+    <div class="card mt-3 shadow-sm">
+        <div class="card-body">
+            <h6>Department Performance</h6>
+            <div class="progress">
+                <div class="progress-bar bg-info" style="width: {{ performance }}%">
+                    {{ performance }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EMPLOYEE TABLE -->
+    <div class="card mt-4 shadow-sm">
+
+        <div class="card-header bg-primary text-white">
+            Team Performance Ranking
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-hover table-bordered">
+
+                <thead class="thead-light">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Employee</th>
+                        <th>Total</th>
+                        <th>Completed</th>
+                        <th>Late</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for d in data %}
+                    <tr>
+
+                        <!--  FINAL FIX -->
+                        <td style="font-size:18px;">{{ d.medal }}</td>
+
+                        <td>
+                            <strong>{{ d.employee.user.username }}</strong><br>
+                            <small class="text-muted">{{ d.employee.designation }}</small>
+                        </td>
+
+                        <td>{{ d.total }}</td>
+                        <td class="text-success">{{ d.completed }}</td>
+                        <td class="text-danger">{{ d.late }}</td>
+
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar 
+                                    {% if d.performance >= 80 %}bg-success
+                                    {% elif d.performance >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    style="width: {{ d.performance }}%">
+                                    {{ d.performance }}%
+                                </div>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No employees found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row mt-4">
+
+        <!-- TASK DISTRIBUTION -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    Task Distribution
+                </div>
+                <div class="card-body text-center">
+                    <canvas id="teamChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- EMPLOYEE PERFORMANCE -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    Employee Performance Comparison
+                </div>
+                <div class="card-body">
+                    <canvas id="employeeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CHART JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Doughnut Chart
+    new Chart(document.getElementById('teamChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed', 'Pending', 'Late'],
+            datasets: [{
+                data: [{{ completed_tasks }}, {{ pending_tasks }}, {{ late_tasks }}]
+            }]
+        }
+    });
+
+    // Employee Chart
+    const labels = [
+        {% for d in data %}
+            "{{ d.employee.user.username }}",
+        {% endfor %}
+    ];
+
+    const performance = [
+        {% for d in data %}
+            {{ d.performance }},
+        {% endfor %}
+    ];
+
+    new Chart(document.getElementById('employeeChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Performance %',
+                data: performance
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}

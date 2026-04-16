@@ -1,0 +1,538 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>{% block page_title %}Dashboard{% endblock %}</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+    background: #f4f6f9;
+    margin: 0;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    height: 100vh;
+    background: #343a40;
+    color: white;
+    position: fixed;
+    width: 230px;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;     /* ✅ FIX SCROLL */
+    overflow-x: hidden;
+
+    scroll-behavior: smooth;  /* ✅ smooth scroll */
+}
+
+/* SCROLLBAR DESIGN */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+/* ================= BRAND ================= */
+.brand {
+    text-align: center;
+    padding: 15px;
+    background: #212529;
+    font-weight: bold;
+    position: sticky;   /* ✅ stays on top */
+    top: 0;
+    z-index: 10;
+}
+
+/* ================= PROFILE ================= */
+.profile-box {
+    text-align: center;
+    padding: 15px;
+    border-bottom: 1px solid #495057;
+}
+
+.profile-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    margin-bottom: 8px;
+}
+
+.profile-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* ================= MENU ================= */
+.menu {
+    flex-grow: 1;   /* ✅ allows scrolling properly */
+}
+
+.menu a {
+    color: #c2c7d0;
+    display: block;
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.menu a:hover {
+    background: #495057;
+    color: white;
+}
+
+/* ACTIVE MENU */
+.menu a.active {
+    background: #007bff;
+    color: white;
+}
+
+/* ================= TOPBAR ================= */
+.topbar {
+    background: white;
+    margin-left: 230px;
+    padding: 10px 20px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    position: sticky;   /* ✅ stays on top */
+    top: 0;
+    z-index: 1000;
+}
+
+/* ================= CONTENT ================= */
+.content {
+    margin-left: 230px;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* ================= DROPDOWN ================= */
+.dropdown-menu {
+    border-radius: 8px;
+}
+</style>
+
+</head>
+
+<body data-chat-url="{% url 'task_chat_history' %}">
+    <audio id="notifSound" preload="auto">
+    <source src="{% static 'sounds/notify.mp3' %}" type="audio/mpeg">
+    </audio>
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar">
+
+    <div class="brand">🚀 OM SAI CRM</div>
+
+    <!-- PROFILE -->
+    <div class="profile-box">
+
+        <img src="{% if request.user.is_superuser and request.user.userprofile.profile_image %}
+            {{ request.user.userprofile.profile_image.url }}
+          {% elif request.user.employee.profile_image %}
+            {{ request.user.employee.profile_image.url }}
+          {% else %}
+            https://ui-avatars.com/api/?name={{ request.user.username }}
+          {% endif %}"
+             class="profile-img">
+
+        <div class="profile-name">
+            {{ request.user.username }}
+        </div>
+
+        <small>
+            {% if request.user.is_superuser %}
+                Admin
+            {% else %}
+                {{ request.user.employee.role|title }}
+            {% endif %}
+        </small>
+
+    </div>
+
+    <!-- MENU -->
+    <div class="menu">
+
+         <!-- ================= ADMIN ================= -->
+        {% if request.user.is_superuser %}
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+
+            <a href="{% url 'employee_list' %}">
+                <i class="fas fa-users"></i> Employees
+            </a>
+
+            <a href="{% url 'department_list' %}">
+                <i class="fas fa-building"></i> Departments
+            </a>
+
+            <a href="{% url 'kra_categories' %}">
+                <i class="fas fa-layer-group"></i> Categories
+            </a>
+
+            <a href="{% url 'kra_tasks' %}">
+                <i class="fas fa-tasks"></i> Task Templates
+            </a>
+
+            <a href="{% url 'assign_task' %}">
+                <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+
+            <a href="{% url 'all_tasks' %}">
+                <i class="fas fa-list"></i> All Tasks
+            </a>
+
+            <a href="{% url 'task_chat_history' %}">
+                💬 Task Chat History
+            </a>
+
+
+        {% endif %}
+
+
+        <!-- ================= MANAGER ================= -->
+        {% if not request.user.is_superuser and request.user.employee.role == "manager" %}
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+
+            <a href="{% url 'manager_dashboard' %}">
+                <i class="fas fa-users-cog"></i> Team Dashboard
+            </a>
+
+            <a href="{% url 'assign_task' %}">
+                <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+
+            <a href="{% url 'all_tasks' %}">
+                <i class="fas fa-tasks"></i> Team Tasks
+            </a>
+
+        {% endif %}
+
+
+        <!-- ================= EMPLOYEE ================= -->
+        {% if not request.user.is_superuser and request.user.employee.role == "employee" %}
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-home"></i> My Dashboard
+            </a>
+
+            <a href="{% url 'dashboard' %}">
+                <i class="fas fa-tasks"></i> My Tasks
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- ================= TOPBAR ================= -->
+<div class="topbar">
+
+    <h5>{% block header_title %}Dashboard{% endblock %}</h5>
+
+    <!-- DROPDOWN -->
+    <div class="dropdown">
+
+        <a class="d-flex align-items-center dropdown-toggle" href="#" data-toggle="dropdown">
+
+            <img src="{% if request.user.is_superuser %}
+            https://ui-avatars.com/api/?name={{ request.user.username }}
+          {% elif request.user.employee.profile_image %}
+            {{ request.user.employee.profile_image.url }}
+          {% else %}
+            https://ui-avatars.com/api/?name={{ request.user.username }}
+          {% endif %}"
+                 width="35" height="35"
+                 class="rounded-circle">
+
+        </a>
+
+        <div class="dropdown-menu dropdown-menu-right shadow">
+
+            <div class="px-3 py-2 border-bottom">
+                <strong>{{ request.user.username }}</strong>
+            </div>
+
+            <!-- UPDATE PROFILE -->
+            <a class="dropdown-item" href="{% url 'update_profile' %}">
+                <i class="fas fa-user mr-2"></i> Update Profile
+            </a>
+
+            <!-- CHANGE PASSWORD -->
+            <a class="dropdown-item" href="{% url 'change_password' %}">
+                <i class="fas fa-lock mr-2"></i> Change Password
+            </a>
+
+            <div class="dropdown-divider"></div>
+
+            <!-- LOGOUT -->
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="dropdown-item text-danger">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </button>
+            </form>
+            <button onclick="enableNotifications()" class="btn btn-warning">
+                🔔 Enable Notifications
+            </button>
+        </div>
+
+    </div>
+       
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+// ================= GLOBAL =================
+let socket;
+let currentUser = "{{ request.user.username|escapejs }}"; //  IMPORTANT
+
+// ================= CONNECT =================
+function connectWebSocket() {
+
+    let protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+
+    socket = new WebSocket(protocol + window.location.host + "/ws/notifications/");
+
+    socket.onopen = function () {
+        console.log("✅ WebSocket Connected");
+    };
+
+   socket.onmessage = function (event) {
+
+    let data = JSON.parse(event.data);
+
+    console.log("📩 EVENT:", data);
+
+    //  Chat update
+    // 💬 Chat only skip duplicate UI, NOT sound
+    if (data.message_type === "chat") {
+        appendMessageToChat(data);
+    }
+
+    // 🔔 ALWAYS show notification
+    showToast(data.message, data.task_id);
+
+    // 🔊 ALWAYS play sound
+    playNotificationSound();
+
+    // 📋 Task UI update
+    if (data.message_type === "task") {
+        addNewTaskToUI(data);
+    }
+};
+
+    socket.onclose = function () {
+        console.log("❌ Disconnected. Reconnecting...");
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    socket.onerror = function (error) {
+        console.log("WebSocket Error:", error);
+    };
+}
+
+connectWebSocket();
+
+function playNotificationSound() {
+
+    let audio = document.getElementById("notifSound");
+
+    if (!audioUnlocked) {
+        console.log("🔇 Not unlocked yet");
+        return;
+    }
+
+    audio.currentTime = 0;
+
+    audio.play().catch(() => {});
+}
+
+// ================= SEND MESSAGE =================
+function sendMessage(event, taskId) {
+
+    event.preventDefault();
+
+    let input = document.getElementById("msgInput" + taskId);
+    let message = input.value.trim();
+
+    if (!message) return;
+
+    appendMessageToChat({
+        message: message,
+        task_id: taskId,
+        username: currentUser
+    });
+
+    input.value = "";
+
+    fetch(`/tasks/add-comment/${taskId}/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: "message=" + encodeURIComponent(message)
+    });
+}
+
+
+// ================= APPEND MESSAGE =================
+function appendMessageToChat(data) {
+
+    let chatBox = document.getElementById("chatBody" + data.task_id);
+    if (!chatBox) return;
+
+    let isOwn = (data.username === currentUser);
+
+    let msg = document.createElement("div");
+
+    if (isOwn) {
+        msg.innerHTML = `
+            <div class="text-right mb-2">
+                <div class="bg-primary text-white p-2 rounded d-inline-block">
+                    <strong>You</strong><br>
+                    ${data.message}
+                </div>
+            </div>
+        `;
+    } else {
+        msg.innerHTML = `
+            <div class="text-left mb-2">
+                <div class="bg-danger text-white p-2 rounded d-inline-block">
+                    <strong>${data.username}</strong><br>
+                    ${data.message}
+                </div>
+            </div>
+        `;
+    }
+
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// ================= TOAST =================
+function showToast(message, taskId) {
+
+    let toast = document.createElement("div");
+
+    toast.innerHTML = `
+        <div style="
+            position:fixed;
+            top:20px;
+            right:20px;
+            background:#343a40;
+            color:white;
+            padding:12px 16px;
+            border-radius:8px;
+            cursor:pointer;
+            z-index:9999;
+            box-shadow:0 4px 10px rgba(0,0,0,0.2);
+            min-width:250px;">
+            🔔 ${message}
+        </div>
+    `;
+
+    toast.onclick = function () {
+        openChat(taskId);
+        toast.remove();
+    };
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 5000);
+}
+
+
+// ================= OPEN CHAT =================
+function openChat(taskId) {
+
+    let modal = document.getElementById("chatModal" + taskId);
+
+    if (modal) {
+        $(modal).modal('show');
+    } else {
+        let baseUrl = document.body.getAttribute("data-chat-url");
+        window.location.href = baseUrl + "?task=" + taskId;
+    }
+}
+
+
+// ================= NOTIFICATION =================
+function showBrowserNotification(message) {
+
+    if (Notification.permission === "granted") {
+        new Notification("CRM Notification", {
+            body: message,
+            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png"
+        });
+    }
+}
+
+
+// ================= CSRF =================
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+</script>
+
+# unlock audio
+<script>
+
+let audioUnlocked = false;
+
+document.addEventListener("click", function () {
+
+    if (!audioUnlocked) {
+
+        let audio = document.getElementById("notifSound");
+
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audioUnlocked = true;
+
+            console.log("🔓 Audio unlocked");
+        }).catch(() => {
+            console.log("❌ Audio blocked");
+        });
+    }
+
+});
+
+</script>
+
+</body>
+</html>

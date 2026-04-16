@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+Departments
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Departments</h3>
+        <a href="{% url 'add_department' %}" class="btn btn-primary btn-sm float-right">
+            Add Department
+        </a>
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered">
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+
+            {% for d in departments %}
+            <tr>
+                <td>{{ d.name }}</td>
+                <td>{{ d.description }}</td>
+                <td>
+                    <a href="{% url 'update_department' d.id %}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{% url 'delete_department' d.id %}" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+
+        </table>
+
+    </div>
+</div>
+
+{% endblock %}

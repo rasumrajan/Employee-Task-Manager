@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+Update Task
+{% endblock %}
+
+{% block content %}
+
+<div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title">Update Task</h3>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card-body">
+            {{ form.as_p }}
+        </div>
+
+        <div class="card-footer">
+            <button class="btn btn-primary">Update</button>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}
