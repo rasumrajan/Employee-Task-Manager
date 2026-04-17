@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ================= KPI CARDS ================= -->
+<div class="row">
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-primary">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h6 class="text-muted">Total Tasks</h6>
+                    <h3>{{ total_tasks }}</h3>
+                </div>
+                <i class="fas fa-tasks fa-2x text-primary"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-success">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h6 class="text-muted">Completed</h6>
+                    <h3 class="text-success">{{ completed_tasks }}</h3>
+                </div>
+                <i class="fas fa-check-circle fa-2x text-success"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-warning">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h6 class="text-muted">Pending</h6>
+                    <h3 class="text-warning">{{ pending_tasks }}</h3>
+                </div>
+                <i class="fas fa-clock fa-2x text-warning"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-danger">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <h6 class="text-muted">Overdue</h6>
+                    <h3 class="text-danger">{{ overdue_tasks }}</h3>
+                </div>
+                <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= PERFORMANCE ================= -->
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Performance Overview</h5>
+    </div>
+
+    <div class="card-body text-center">
+
+        <h1 class="mb-3">{{ performance }}%</h1>
+        
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar 
+                {% if performance >= 80 %}bg-success
+                {% elif performance >= 50 %}bg-warning
+                {% else %}bg-danger{% endif %}"
+                 style="width: {{ performance }}%">
+                {{ performance }}%
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= TASK TABLE ================= -->
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Recent Tasks</h5>
+    </div>
+
+    <div class="card-body table-responsive">
+
+        <table class="table table-hover table-bordered align-middle">
+
+            <thead class="thead-light">
+                <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Progress</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for task in recent_tasks %}
+                <tr {% if task.is_overdue %} class="table-danger" {% endif %}>
+
+                    <!-- TASK -->
+                    <td>
+                        <strong>{{ task.task.title }}</strong><br>
+                        <small class="text-muted">
+                            {{ task.task.description|truncatewords:6 }}
+                        </small>
+                    </td>
+
+                    <!-- STATUS -->
+                    <td>
+                        <span class="badge 
+                            {% if task.status == 'completed' %}badge-success
+                            {% elif task.status == 'in_progress' %}badge-primary
+                            {% elif task.status == 'assigned' %}badge-dark
+                            {% elif task.status == 'accepted' %}badge-info
+                            {% elif task.status == 'done' %}badge-warning
+                            {% else %}badge-secondary
+                            {% endif %}">
+                            {{ task.status|title }}
+                        </span>
+                    </td>
+
+                    <!-- DEADLINE -->
+                    <td>
+                        {{ task.deadline }}<br>
+                        {% if task.is_overdue %}
+                            <small class="text-danger">Overdue</small>
+                        {% endif %}
+                    </td>
+
+                    <!-- PROGRESS -->
+                    <td style="min-width:150px;">
+                        <div class="progress">
+                            <div class="progress-bar bg-success"
+                                 style="width: {{ task.progress }}%">
+                                {{ task.progress }}%
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- ACTIONS -->
+                    <td>
+
+                        {% if not request.user.is_superuser %}
+
+                            {% if task.status == 'assigned' %}
+                                <a href="{% url 'accept_task' task.id %}" class="btn btn-success btn-sm">Accept</a>
+
+                            {% elif task.status == 'accepted' %}
+                                <a href="{% url 'start_task' task.id %}" class="btn btn-primary btn-sm">Start</a>
+
+                            {% elif task.status == 'in_progress' %}
+                                <a href="{% url 'pause_task' task.id %}" class="btn btn-warning btn-sm">Pause</a>
+                                <a href="{% url 'mark_done' task.id %}" class="btn btn-success btn-sm">Done</a>
+
+                            {% elif task.status == 'paused' %}
+                                <a href="{% url 'start_task' task.id %}" class="btn btn-primary btn-sm">Resume</a>
+
+                            {% elif task.status == 'done' %}
+                                <span class="text-warning">Waiting Approval</span>
+
+                            {% elif task.status == 'completed' %}
+                                <span class="text-success">Approved</span>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                        {% if request.user.is_superuser %}
+
+                            {% if task.status|lower == 'done' %}
+                                <a href="{% url 'approve_task' task.id %}" 
+                                   class="btn btn-success btn-sm">
+                                    Approve
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        No tasks found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- ================= CHART ================= -->
+<div class="card shadow-sm mt-4">
+
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Task Distribution</h5>
+    </div>
+
+    <div class="card-body text-center">
+        <canvas id="taskChart" style="max-height:300px;"></canvas>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+new Chart(document.getElementById('taskChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Completed', 'Pending', 'In Progress', 'Overdue'],
+        datasets: [{
+            data: [
+                {{ completed_tasks }},
+                {{ pending_tasks }},
+                {{ in_progress_tasks }},
+                {{ overdue_tasks }}
+            ]
+        }]
+    }
+});
+</script>
+
+{% endblock %}

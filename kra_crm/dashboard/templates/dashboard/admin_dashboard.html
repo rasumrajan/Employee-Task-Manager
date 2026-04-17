@@ -1,0 +1,650 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block header_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- ================= KPI ================= -->
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center border-left-primary">
+                <div class="card-body">
+                    <i class="fas fa-tasks fa-2x text-primary mb-2"></i>
+                    <h6>Total Tasks</h6>
+                    <h3>{{ total_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center border-left-success">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h6>Completed</h6>
+                    <h3 class="text-success">{{ completed_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center border-left-warning">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h6>Pending</h6>
+                    <h3 class="text-warning">{{ pending_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center border-left-danger">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                    <h6>Late</h6>
+                    <h3 class="text-danger">{{ late_tasks }}</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+   <!-- ================= TOP PERFORMER ================= -->
+{% if top_performer %}
+<div class="card mt-4 shadow-lg border-0 top-performer-card">
+
+    <div class="card-body text-center position-relative">
+
+        <!-- Crown -->
+        <div class="crown-icon">👑</div>
+
+        <!-- Profile Image -->
+        <div class="profile-wrapper">
+
+            {% if top_performer.employee.profile_image %}
+                <img src="{{ top_performer.employee.profile_image.url }}"
+                     class="profile-img">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ top_performer.employee.user.username }}"
+                     class="profile-img">
+            {% endif %}
+
+            <!-- Online dot -->
+            <span class="online-dot"></span>
+
+        </div>
+
+        <h6 class="text-light mt-3 mb-1">Top Performer</h6>
+
+        <h3 class="text-white font-weight-bold">
+            {{ top_performer.employee.user.username }}
+        </h3>
+
+        <p class="text-light mb-2">
+            {{ top_performer.employee.designation }}
+        </p>
+
+        <!-- Performance -->
+        <div class="performance-badge">
+            {{ top_performer.performance }}%
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+    <!-- ================= DEPARTMENT CARDS (CLICKABLE) ================= -->
+    <div class="mt-4">
+        <h5>Departments</h5>
+        <div class="row">
+
+            {% for dept in departments %}
+            <div class="col-md-3">
+                <a href="{% url 'department_employees' dept.id %}" style="text-decoration:none;">
+                    <div class="card shadow-sm text-center mb-3 hover-card">
+                        <div class="card-body">
+                            <i class="fas fa-building fa-2x text-dark mb-2"></i>
+                            <h5>{{ dept.name }}</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+     <!-- ================= EMPLOYEE RANKING ================= -->
+    <div class="card mt-4 shadow-sm">
+
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span>Employee Ranking</span>
+        <small class="text-light">Top Performers</small>
+    </div>
+
+    <div class="card-body p-0">
+
+        <div style="max-height: 350px; overflow-y: auto;">
+
+            <table class="table table-hover table-bordered mb-0">
+
+                <thead style="position: sticky; top: 0; background: #fff; z-index: 10;">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Employee</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for d in data %}
+                    <tr class="
+                        {% if forloop.first %}table-success
+                        {% elif forloop.counter == 2 %}table-warning
+                        {% elif forloop.counter == 3 %}table-info
+                        {% endif %}
+                    ">
+
+                        <td style="font-size:18px; font-weight:bold;">
+                            {{ d.medal }}
+                        </td>
+
+                        <td>
+                            <strong>{{ d.employee.user.username }}</strong><br>
+                            <small class="text-muted">{{ d.employee.designation }}</small>
+
+                            {% if d.total == 0 %}
+                                <br><small class="text-danger">No tasks yet</small>
+                            {% endif %}
+                        </td>
+
+                        <td style="min-width:180px;">
+                            <div class="progress">
+
+                                <div class="progress-bar 
+                                    {% if d.performance >= 80 %}bg-success
+                                    {% elif d.performance >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    
+                                    style="width: {{ d.performance|default:0 }}%; min-width: 40px;">
+                                    
+                                    {{ d.performance|default:0 }}%
+                                </div>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ================= STYLE ================= -->
+<style>
+.top-performer-card {
+    background: linear-gradient(135deg, #1d2671, #c33764);
+    border-radius: 15px;
+}
+
+.profile-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+}
+
+.online-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 14px;
+    height: 14px;
+    background: #28a745;
+    border: 2px solid #fff;
+    border-radius: 50%;
+}
+
+.crown-icon {
+    font-size: 28px;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.performance-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: bold;
+}
+</style>
+
+    <!-- ================= CHARTS ================= -->
+    <div class="row mt-4">
+
+        <!-- EMPLOYEE CHART -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    Employee Performance
+                </div>
+                <div class="card-body">
+                    <canvas id="empChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEPARTMENT CHART -->
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+
+                <div class="card-header bg-dark text-white d-flex justify-content-between">
+                    <span>Department Analysis</span>
+                    <small>Performance Overview</small>
+                </div>
+
+                <div class="card-body">
+                    <canvas id="deptChart" style="height:300px;"></canvas>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= TASK APPROVAL ================= -->
+<div class="card mt-4 shadow-sm">
+
+    <div class="card-header bg-success text-white">
+        Pending Approvals
+    </div>
+
+    <div class="card-body table-responsive">
+
+        <table class="table table-bordered table-hover">
+
+            <thead class="thead-light">
+                <tr>
+                    <th>Employee</th>
+                    <th>Task</th>
+                    <th>Note</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for t in tasks %}
+                <tr>
+
+                    <td>{{ t.employee.user.username }}</td>
+                    <td>{{ t.task.title }}</td>
+
+                    <!-- NOTE -->
+                    <td>
+                        {% if t.completion_note %}
+                            <button class="btn btn-info btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#noteModal{{ t.id }}">
+                                View Note
+                            </button>
+                        {% else %}
+                            <span class="text-muted">No note</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- STATUS -->
+                    <td>
+                        {% if t.status == 'done' %}
+                            <span class="badge badge-warning">Waiting Approval</span>
+                        {% elif t.status == 'completed' %}
+                            <span class="badge badge-success">Approved</span>
+                        {% elif t.status == 'rejected' %}
+                            <span class="badge badge-danger">Rejected</span>
+                        {% else %}
+                            <span class="badge badge-secondary">{{ t.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ t.deadline|date:"d M Y, h:i A" }}</td>
+
+                    <!-- ACTION -->
+                    <td>
+
+                        {% if t.status == 'done' %}
+                            <a href="{% url 'approve_task' t.id %}" class="btn btn-success btn-sm">
+                                ✔ Approve
+                            </a>
+
+                            <button class="btn btn-danger btn-sm"
+                                    data-toggle="modal"
+                                    data-target="#rejectModal{{ t.id }}">
+                                ❌ Reject
+                            </button>
+                        {% endif %}
+
+                        <!-- 🔥 CHAT BUTTON -->
+                        <button class="btn btn-dark btn-sm mt-1"
+                                data-toggle="modal"
+                                data-target="#chatModal{{ t.id }}">
+                            💬 Chat
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                <!-- ================= NOTE MODAL ================= -->
+                <div class="modal fade" id="noteModal{{ t.id }}">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5>Employee Note</h5>
+                                <button class="close" data-dismiss="modal">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                {{ t.completion_note }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= REJECT MODAL ================= -->
+                <div class="modal fade" id="rejectModal{{ t.id }}">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+
+                            <form method="POST" action="{% url 'reject_task' t.id %}">
+                                {% csrf_token %}
+
+                                <div class="modal-header">
+                                    <h5>Reject Task</h5>
+                                </div>
+
+                                <div class="modal-body">
+                                    <textarea name="reason"
+                                              class="form-control"
+                                              placeholder="Enter rejection reason..."
+                                              required></textarea>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button class="btn btn-danger">Submit</button>
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
+               <!-- ================= CHAT MODAL ================= -->
+<div class="modal fade" id="chatModal{{ t.id }}">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header bg-dark text-white">
+                <h5>Chat - {{ t.employee.user.username }}</h5>
+                <button class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- CHAT BODY -->
+            <div class="modal-body"
+                 id="chatBody{{ t.id }}"
+                 style="max-height:400px; overflow-y:auto; background:#f4f6f9; padding:15px;">
+
+                {% for msg in t.comments.all %}
+
+                    {% if msg.user.username == request.user.username %}
+                        <!-- YOUR MESSAGE -->
+                        <div class="text-right mb-2">
+                            <div class="bg-primary text-white p-2 rounded d-inline-block">
+                                <strong>You</strong><br>
+                                {{ msg.message }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- OTHER USER -->
+                        <div class="text-left mb-2">
+                            <div class="bg-danger text-white p-2 rounded d-inline-block">
+                                <strong>{{ msg.user.username }}</strong><br>
+                                {{ msg.message }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                {% empty %}
+                    <p class="text-muted text-center">No messages yet</p>
+                {% endfor %}
+
+            </div>
+
+            <!-- SEND MESSAGE -->
+            <div class="modal-footer">
+                <form onsubmit="sendMessage(event, {{ t.id }})" class="w-100">
+                    {% csrf_token %}
+
+                    <div class="input-group">
+                        <input type="text"
+                               id="msgInput{{ t.id }}"
+                               class="form-control"
+                               placeholder="Reply to employee..."
+                               autocomplete="off"
+                               required>
+
+                        <div class="input-group-append">
+                            <button class="btn btn-dark">Send</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        No tasks for approval
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+                
+
+                </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ================= STYLE ================= -->
+<style>
+.hover-card:hover {
+    transform: translateY(-5px);
+    transition: 0.3s;
+    cursor: pointer;
+}
+.border-left-primary { border-left: 5px solid #007bff; }
+.border-left-success { border-left: 5px solid #28a745; }
+.border-left-warning { border-left: 5px solid #ffc107; }
+.border-left-danger { border-left: 5px solid #dc3545; }
+
+/* CARD */
+.top-performer-card {
+    background: linear-gradient(135deg, #1d2671, #c33764);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+    position: relative;
+}
+
+.top-performer-card:hover {
+    transform: translateY(-6px) scale(1.02);
+}
+
+/* PROFILE */
+.profile-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* ONLINE DOT */
+.online-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 14px;
+    height: 14px;
+    background: #28a745;
+    border: 2px solid #fff;
+    border-radius: 50%;
+}
+
+/* CROWN */
+.crown-icon {
+    font-size: 28px;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    animation: float 2s ease-in-out infinite;
+}
+
+/* FLOAT ANIMATION */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+
+/* PERFORMANCE BADGE */
+.performance-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* GLOW EFFECT */
+.top-performer-card::after {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+    top: -50%;
+    left: -50%;
+    animation: rotateGlow 6s linear infinite;
+}
+
+@keyframes rotateGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<!-- ================= CHART JS ================= -->
+<!-- CHART JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// ================= EMPLOYEE CHART (FIXED) =================
+new Chart(document.getElementById('empChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ employee_labels|safe }},
+        datasets: [{
+            label: 'Performance %',
+            data: {{ employee_performance|safe }},
+            backgroundColor: '#17a2b8',
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true, max: 100 }
+        }
+    }
+});
+
+// ================= DEPARTMENT CHART =================
+new Chart(document.getElementById('deptChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ dept_labels|safe }},
+        datasets: [
+            {
+                label: 'Completed',
+                data: {{ dept_completed|safe }},
+                backgroundColor: '#28a745'
+            },
+            {
+                label: 'Pending',
+                data: {{ dept_pending|safe }},
+                backgroundColor: '#ffc107'
+            },
+            {
+                label: 'Late',
+                data: {{ dept_late|safe }},
+                backgroundColor: '#dc3545'
+            }
+        ]
+    },
+    options: {
+        responsive: true
+    }
+});
+
+</script>
+
+{% endblock %}
